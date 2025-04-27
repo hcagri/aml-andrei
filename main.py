@@ -16,12 +16,12 @@ from types import SimpleNamespace
 def create_parser():
     parser = argparse.ArgumentParser()
 
-    parser.add_argument("--data_path", default="/mnt/cagri/data", type=str, required=True)
-    parser.add_argument("--output_dir", default="/home/cbilgi/cse3000/megagnn/results", type=str, required=True)
+    parser.add_argument("--data_path", default="/home/andrei/Documents/visualSCode/aml-andrei/data", type=str)#, required=True
+    parser.add_argument("--output_dir", default="/home/andrei/Documents/visualSCode/aml-andrei/results", type=str)#, required=True
     parser.add_argument("--emlps", action='store_true', help="Use emlps in GNN training")
     
     #Model parameters
-    parser.add_argument("--batch_size", default=8192, type=int, help="Select the batch size for GNN training")
+    parser.add_argument("--batch_size", default=4096, type=int, help="Select the batch size for GNN training")
     parser.add_argument("--n_epochs", default=100, type=int, help="Select the number of epochs for GNN training")
     parser.add_argument('--num_neighs', nargs='+', default=[100,100], help='Pass the number of neighors to be sampled in each hop (descending).')
 
