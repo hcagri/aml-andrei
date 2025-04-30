@@ -11,6 +11,7 @@ import sys
 import yaml
 import argparse
 import torch
+import wandb
 from types import SimpleNamespace
 
 def create_parser():
@@ -116,7 +117,17 @@ def setup_config(args):
     with open(config_path, 'w') as f:
         yaml.dump(config_dict, f, default_flow_style=False)
     logging.info(f"Configuration saved to {config_path}")
-    
+    # 
+    if not args.testing:
+        # Initialize wandb
+        wandb.init(
+            project="AML_GNN",
+            name=f"{args.data}_{timestamp}",
+            config=config_dict,
+            dir=run_dir,
+            reinit=True
+        )
+
     # Convert dictionary to SimpleNamespace for attribute-style access
     config = SimpleNamespace(**config_dict)
     

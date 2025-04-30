@@ -16,6 +16,8 @@ from torch.nn import Module
 from .util import add_arange_ids, save_model
 from .models import MPNN
 
+import wandb
+
 def get_loaders(tr_data, val_data, te_data, tr_inds, val_inds, te_inds, transform, config):
 
     tr_loader =  LinkNeighborLoader(tr_data, num_neighbors=config.num_neighs, batch_size=config.batch_size, shuffle=True, transform=transform)
@@ -220,6 +222,12 @@ def train(
 
         # Log loss
         logging.info(f"Loss: {total_loss}")
+        
+        if not config.testing:
+            wandb.log({"Train": {"F1": round(f1,4), "Precision": round(precision,4), "Recall": round(recall,4), "PR-AUC": round(auc,4)}})
+            wandb.log({"Val": {"F1": round(val_f1,4), "Precision": round(val_precision,4), "Recall": round(val_recall,4), "PR-AUC": round(val_auc,4)}})
+            wandb.log({"Test": {"F1": round(te_f1,4), "Precision": round(te_precision,4), "Recall": round(te_recall,4), "PR-AUC": round(te_auc,4)}})
+            wandb.log({"Loss": total_loss})
 
         # Model selection based on validation F1 score
         if epoch == 0:

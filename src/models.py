@@ -2,7 +2,7 @@ import torch.nn as nn
 from torch_geometric.nn import GINEConv, BatchNorm, Linear, PNAConv
 import torch.nn.functional as F
 import torch
-
+import wandb
 
 class MPNN(torch.nn.Module):
     def __init__(self, num_features, num_gnn_layers, n_classes=2, n_hidden=100, 
