@@ -20,7 +20,7 @@ def create_parser():
     #rint(f"Current directory: {current_dir}")
     default_data_path = os.path.join(current_dir, "data")
     default_output_dir = os.path.join(current_dir, "results")
-
+    # test to check if i set the github account back to normal
     parser.add_argument("--data_path", default=default_data_path, type=str, help="Path to the data directory")
     parser.add_argument("--output_dir", default=default_output_dir, type=str, help="Path to the output directory")
     parser.add_argument("--emlps", action='store_true', help="Use emlps in GNN training")
