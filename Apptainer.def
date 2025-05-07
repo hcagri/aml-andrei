@@ -6,6 +6,7 @@ From: ubuntu:latest
     env.yml /env.yml
     src /src
     data /data
+    results /results
     main.py /main.py
     model_settings.json /model_settings.json
 
@@ -34,6 +35,10 @@ From: ubuntu:latest
 
     # Install additional Python dependencies
     pip install -r /requirements.txt
+    
+    # Ensure /results is writable
+    mkdir -p /results
+    chmod -R 777 /results
 
     # Clean up
     apt-get clean && rm -rf /var/lib/apt/lists/*
@@ -44,6 +49,8 @@ From: ubuntu:latest
     export PATH=/opt/conda/bin:$PATH
     . /opt/conda/etc/profile.d/conda.sh
     conda activate aml-env
+
+    export WANDB_API_KEY="ea7a55d9ed34345259ae31634a6b7fff2425082f"
 
 %runscript
     # Run the main.py script with arguments

@@ -16,9 +16,13 @@ from types import SimpleNamespace
 
 def create_parser():
     parser = argparse.ArgumentParser()
+    current_dir = os.path.dirname(os.path.abspath(__file__))
+    #rint(f"Current directory: {current_dir}")
+    default_data_path = os.path.join(current_dir, "data")
+    default_output_dir = os.path.join(current_dir, "results")
 
-    parser.add_argument("--data_path", default="/home/andrei/Documents/visualSCode/aml-andrei/data", type=str)#, required=True
-    parser.add_argument("--output_dir", default="/home/andrei/Documents/visualSCode/aml-andrei/results", type=str)#, required=True
+    parser.add_argument("--data_path", default=default_data_path, type=str, help="Path to the data directory")
+    parser.add_argument("--output_dir", default=default_output_dir, type=str, help="Path to the output directory")
     parser.add_argument("--emlps", action='store_true', help="Use emlps in GNN training")
     
     #Model parameters
