@@ -14,7 +14,8 @@ from torch.optim import Optimizer
 from torch.nn import Module
 
 from .util import add_arange_ids, save_model
-from .models import MPNN
+from .models.mpnn import MPNN
+from .models.interleaved_edges import Interleaved_Edges
 
 import wandb
 
@@ -264,8 +265,17 @@ def get_model(sample_batch, config):
     
     d = degree(sample_batch.edge_index[1], num_nodes=sample_batch.num_nodes, dtype=torch.long)
     deg = torch.bincount(d, minlength=1)
-
-    model = MPNN(num_features=n_feats, num_gnn_layers=config.n_gnn_layers, n_classes=2, 
+    model = None
+    if config.model == 'interleaved':
+        
+        config.model = 'pna'
+        model = Interleaved_Edges(num_features=n_feats, num_gnn_layers=config.n_gnn_layers, n_classes=2, 
+                                    n_hidden=round(config.n_hidden), edge_updates=config.emlps, edge_dim=e_dim, 
+                                    final_dropout=config.final_dropout, deg=deg, config=config,
+                                )
+        config.model = 'interleaved'
+    else:
+        model = MPNN(num_features=n_feats, num_gnn_layers=config.n_gnn_layers, n_classes=2, 
                       n_hidden=round(config.n_hidden), edge_updates=config.emlps, edge_dim=e_dim, 
                       final_dropout=config.final_dropout, deg=deg, config=config)
 

@@ -1,4 +1,6 @@
-## Setup
+# Setting up
+
+## Set up Locally
 
 - Create a new Conda environment, and activate.
 ```bash
@@ -13,6 +15,28 @@ conda install pyg -c pyg
 pip install -r requirements.txt
 ```
 
-## Data
+## Set up for DAIC
 
-The data needed for the experiments can be found on [Kaggle](https://www.kaggle.com/datasets/ealtman2019 ibm-transactions-for-anti-money-laundering-aml/data).
+Use the `Apptainer.def` file to change the data stored and behavior of the container. Currently, it is set up to run the same commands as the ones indicated above. 
+
+To create the image file, run 
+```bash
+apptainer build <container_name>.sif Apptainer.def
+```
+
+To deploy on DAIC, you can use the `sbatch.execute.slurm` file configured for the DAIC cluster. Don't forget to change the `${container_name}` variable to the name of your container.
+Then send the files (`.sif` file, `sbatch.execute.slurm`) to the DAIC cluster. You can use `scp` for that:
+
+```bash
+scp (-r) /path/to/your/project/<container_name>.sif <netid>@login.daic.tudelft.nl:/path/to/your/directory
+```
+
+After that, you can run the following command to submit the job:
+
+```bash
+sbatch sbatch.execute.slurm
+```
+# Data
+
+The data needed for the experiments can be found on [Kaggle](https://www.kaggle.com/datasets/ealtman2019/ibm-transactions-for-anti-money-laundering-aml/data).
+
