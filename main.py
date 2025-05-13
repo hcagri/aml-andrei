@@ -13,6 +13,7 @@ import argparse
 import torch
 import wandb
 from types import SimpleNamespace
+from pprint import pprint
 
 def create_parser():
     parser = argparse.ArgumentParser()
@@ -75,45 +76,12 @@ def setup_config(args):
     logger_setup(log_dir)   
     
     # Create config dictionary with all args included
-    config_dict = {
-        # Training configuration
-        "epochs": args.n_epochs,
-        "batch_size": args.batch_size,
-        "model": args.model,
-        "data": args.data,
-        "num_neighs": args.num_neighs,
-        "lr": extract_param("lr", args),
-        "n_hidden": extract_param("n_hidden", args),
-        "n_gnn_layers": extract_param("n_gnn_layers", args),
-        "loss": "ce",
-        "w_ce1": extract_param("w_ce1", args),
-        "w_ce2": extract_param("w_ce2", args),
-        "dropout": extract_param("dropout", args),
-        "final_dropout": extract_param("final_dropout", args),
-        
-        # Directories
-        "run_dir": run_dir,
-        "log_dir": log_dir,
-        "checkpoint_dir": checkpoint_dir,
-        "output_dir": args.output_dir,
-        "data_path": args.data_path,
-        
-        # Other args
-        "seed": args.seed,
-        "device": torch.device(args.device if torch.cuda.is_available() else "cpu"),
-        "emlps": args.emlps,
-        "save_model": args.save_model if hasattr(args, 'save_model') else False
-    }
-    
-    # Add any other args that weren't explicitly handled
-    for key, value in vars(args).items():
-        if key not in config_dict:
-            config_dict[key] = value
+    config_dict = create_config_dict(args, run_dir, log_dir, checkpoint_dir)
 
     # Print the config 
     print("----- CONFIG -----")
     for key, value in config_dict.items():
-        print(f"{key}: {value}")
+        pprint(f"{key}: {value}")
     print(2*"------------------")
 
     # Save config to file
@@ -136,6 +104,84 @@ def setup_config(args):
     config = SimpleNamespace(**config_dict)
     
     return config
+
+def create_config_dict(args, run_dir, log_dir, checkpoint_dir):
+    # Create config dictionary with all args included
+    config_dict = {
+        # Training configuration
+        "epochs": args.n_epochs,
+        "batch_size": args.batch_size,
+        "model": args.model,
+        "data": args.data,
+        "num_neighs": args.num_neighs,
+        
+        
+        # Directories
+        "run_dir": run_dir,
+        "log_dir": log_dir,
+        "checkpoint_dir": checkpoint_dir,
+        "output_dir": args.output_dir,
+        "data_path": args.data_path,
+        
+        # Other args
+        "seed": args.seed,
+        "device": torch.device(args.device if torch.cuda.is_available() else "cpu"),
+        "emlps": args.emlps,
+        "save_model": args.save_model if hasattr(args, 'save_model') else False
+    }
+
+    if args.model == "interleaved" or args.model == "fusion":
+        arch = extract_param("architecture", args)
+        arch_params = []
+        for model in arch:
+            temp_dict = {}
+            
+            if model == "gin" or model == "pna":
+                temp_dict["model"] = model
+                temp_dict["lr"] = extract_param("lr", args, model)
+                temp_dict["n_hidden"] = extract_param("n_hidden", args, model)
+                temp_dict["n_gnn_layers"] = extract_param("n_gnn_layers", args, model)
+                temp_dict["loss"] = "ce"
+                temp_dict["w_ce1"] = extract_param("w_ce1", args,model)
+                temp_dict["w_ce2"] = extract_param("w_ce2", args,model)
+                temp_dict["dropout"] = extract_param("dropout", args,model)
+                temp_dict["final_dropout"] = extract_param("final_dropout", args,model)
+            elif model == "transformer":
+                temp_dict["model"] = model
+                temp_dict["no_heads"] = extract_param("no_heads", args, model)
+                temp_dict["n_hidden"] = extract_param("n_hidden", args, model)
+                temp_dict["n_layers"] = extract_param("n_layers", args, model)
+                temp_dict["dropout"] = extract_param("dropout", args, model)
+            
+            arch_params.append(temp_dict)
+        
+        config_dict["arch"] = arch_params
+
+        config_dict["n_hidden"] = extract_param("n_hidden", args)
+        config_dict["final_dropout"] = extract_param("final_dropout", args)
+        config_dict["lr"] = extract_param("lr", args)
+        config_dict["loss"] = "ce"
+        config_dict["w_ce1"] = extract_param("w_ce1", args)
+        config_dict["w_ce2"] = extract_param("w_ce2", args)
+
+    else:
+        config_dict["lr"] = extract_param("lr", args)
+        config_dict["n_hidden"] = extract_param("n_hidden", args)
+        config_dict["n_gnn_layers"] = extract_param("n_gnn_layers", args)
+        config_dict["loss"] = "ce"
+        config_dict["w_ce1"] = extract_param("w_ce1", args)
+        config_dict["w_ce2"] = extract_param("w_ce2", args)
+        config_dict["dropout"] = extract_param("dropout", args)
+        config_dict["final_dropout"] = extract_param("final_dropout", args)
+
+    
+    # Add any other args that weren't explicitly handled
+    for key, value in vars(args).items():
+        if key not in config_dict:
+            config_dict[key] = value
+
+    return config_dict
+
 
 def main():
     parser = create_parser()

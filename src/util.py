@@ -6,9 +6,10 @@ import logging
 import os
 import sys
 import json
+import copy
 
 
-def extract_param(parameter_name: str, config) -> float:
+def extract_param(parameter_name: str, config, model: str = None) -> float:
     """
     Extract the value of the specified parameter for the given model.
     
@@ -23,8 +24,13 @@ def extract_param(parameter_name: str, config) -> float:
     file_path = './model_settings.json'
     with open(file_path, "r") as file:
         data = json.load(file)
-
-    return data.get(config.model, {}).get("params", {}).get(parameter_name, None)
+    md = None
+    if model is None:
+        md = config.model
+    else:
+        md = model
+    
+    return data.get(md, {}).get("params", {}).get(parameter_name, None)
 
 def add_arange_ids(data_list):
     '''
@@ -59,3 +65,31 @@ def save_model(model, optimizer, epoch, config):
                 }, 
                 os.path.join(config.checkpoint_dir, f'epoch_{epoch+1}.tar')
             )
+    
+
+def unpack_dict_ns(config, arch_id):
+    """
+    Unpack the dictionary and convert it to a SimpleNamespace object.
+    
+    Args:
+    - config (dict): Configuration namespace.
+    - arch_id (int): Architecture ID.
+    
+    Returns:
+    - SimpleNamespace: Unpacked configuration.
+    """
+    
+    # Unpack the architecture parameters
+    arch_params = config.arch[arch_id]
+    #print(arch_params)
+    configpy = copy.deepcopy(config)
+    delattr(configpy,'arch')
+
+    
+    for key, value in arch_params.items():
+        #print(key, value)
+        setattr(configpy, key, value)
+    
+    # Convert the architecture parameters to SimpleNamespace
+    
+    return configpy

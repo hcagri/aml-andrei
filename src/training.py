@@ -269,12 +269,11 @@ def get_model(sample_batch, config):
     model = None
     if config.model == 'interleaved':
         
-        config.model = 'pna'
-        model = Interleaved_Edges(num_features=n_feats, num_gnn_layers=config.n_gnn_layers, n_classes=2, 
+        model = Interleaved_Edges(num_features=n_feats, n_classes=2, 
                                     n_hidden=round(config.n_hidden), edge_dim=e_dim, 
                                     final_dropout=config.final_dropout, deg=deg, config=config,
                                 )
-        config.model = 'interleaved'
+        
     else:
         model = MPNN(num_features=n_feats, num_gnn_layers=config.n_gnn_layers, n_classes=2, 
                       n_hidden=round(config.n_hidden), edge_updates=config.emlps, edge_dim=e_dim, 

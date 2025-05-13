@@ -5,9 +5,9 @@ import torch
 import wandb
 from src.models.mpnn import GnnHelper
 from torch_geometric.nn import Linear
-
+from src.util import unpack_dict_ns
 class Interleaved_Edges(torch.nn.Module):
-    def __init__(self, num_features, num_gnn_layers, n_classes=2, n_hidden=100, 
+    def __init__(self, num_features, n_classes=2, n_hidden=100, 
                  edge_dim=None, final_dropout=0.5, 
                 deg=None, config=None,
                 no_heads_transformer=4, num_layers_transformer=2, dropout_rate_transformer=0.1,
@@ -20,24 +20,28 @@ class Interleaved_Edges(torch.nn.Module):
         self.node_emb = nn.Linear(num_features, n_hidden)
         self.edge_emb = nn.Linear(edge_dim, n_hidden)
 
-    
-        self.gnn1 = GnnHelper(num_gnn_layers=num_gnn_layers, n_hidden=n_hidden, edge_updates=True, final_dropout=final_dropout,
-                            deg=deg, config=config)
+        fcpy = unpack_dict_ns(config, 0)   
+        #print(fcpy)   
+        self.gnn1 = GnnHelper(num_gnn_layers=fcpy.n_gnn_layers, n_hidden=fcpy.n_hidden, edge_updates=True, final_dropout=fcpy.final_dropout,
+                            deg=deg, config=fcpy)
         
+        scpy = unpack_dict_ns(config, 1)
+        print(scpy)
         self.transformer = nn.TransformerEncoder(
             nn.TransformerEncoderLayer(
-                d_model=n_hidden,
-                nhead=no_heads_transformer,
-                dim_feedforward=2*n_hidden,
-                dropout=dropout_rate_transformer,
+                d_model=scpy.n_hidden,
+                nhead=scpy.no_heads,
+                dim_feedforward=2*scpy.n_hidden,
+                dropout=scpy.dropout,
                 activation='relu',
                 batch_first=True
             ),
-            num_layers=num_layers_transformer
+            num_layers=scpy.n_layers,
         )
 
-        self.gnn2 = GnnHelper(num_gnn_layers=num_gnn_layers, n_hidden=n_hidden, edge_updates=True, final_dropout=final_dropout,
-                            deg=deg, config=config)
+        tcpy = unpack_dict_ns(config, 2)
+        self.gnn2 = GnnHelper(num_gnn_layers=tcpy.n_gnn_layers, n_hidden=tcpy.n_hidden, edge_updates=True, final_dropout=tcpy.final_dropout,
+                            deg=deg, config=tcpy)
 
 
 
