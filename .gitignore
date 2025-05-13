@@ -3,3 +3,4 @@ results/
 src/__pycache__/
 *.sif
 *.pyc
+*.img

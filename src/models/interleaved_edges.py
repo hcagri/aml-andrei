@@ -8,7 +8,7 @@ from torch_geometric.nn import Linear
 
 class Interleaved_Edges(torch.nn.Module):
     def __init__(self, num_features, num_gnn_layers, n_classes=2, n_hidden=100, 
-                 edge_updates=False,edge_dim=None, final_dropout=0.5, 
+                 edge_dim=None, final_dropout=0.5, 
                 deg=None, config=None,
                 no_heads_transformer=4, num_layers_transformer=2, dropout_rate_transformer=0.1,
                 ):
@@ -21,7 +21,7 @@ class Interleaved_Edges(torch.nn.Module):
         self.edge_emb = nn.Linear(edge_dim, n_hidden)
 
     
-        self.gnn1 = GnnHelper(num_gnn_layers=num_gnn_layers, n_hidden=n_hidden, edge_updates=edge_updates, final_dropout=final_dropout,
+        self.gnn1 = GnnHelper(num_gnn_layers=num_gnn_layers, n_hidden=n_hidden, edge_updates=True, final_dropout=final_dropout,
                             deg=deg, config=config)
         
         self.transformer = nn.TransformerEncoder(
@@ -30,12 +30,13 @@ class Interleaved_Edges(torch.nn.Module):
                 nhead=no_heads_transformer,
                 dim_feedforward=2*n_hidden,
                 dropout=dropout_rate_transformer,
-                activation='relu'
+                activation='relu',
+                batch_first=True
             ),
             num_layers=num_layers_transformer
         )
 
-        self.gnn2 = GnnHelper(num_gnn_layers=num_gnn_layers, n_hidden=n_hidden, edge_updates=edge_updates, final_dropout=final_dropout,
+        self.gnn2 = GnnHelper(num_gnn_layers=num_gnn_layers, n_hidden=n_hidden, edge_updates=True, final_dropout=final_dropout,
                             deg=deg, config=config)
 
 
@@ -52,8 +53,10 @@ class Interleaved_Edges(torch.nn.Module):
         x, edge_attr = self.gnn1(x, data.edge_index, edge_attr)
         
         # Transformer Layer
+        edge_attr = edge_attr.unsqueeze(0)
         edge_attr = self.transformer(edge_attr)
-
+        edge_attr = edge_attr.squeeze(0)
+        
         # Second GNN Layer
         x, edge_attr = self.gnn2(x, data.edge_index, edge_attr)
         

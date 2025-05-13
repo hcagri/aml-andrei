@@ -17,6 +17,7 @@ from .util import add_arange_ids, save_model
 from .models.mpnn import MPNN
 from .models.interleaved_edges import Interleaved_Edges
 
+from tqdm import tqdm
 import wandb
 
 def get_loaders(tr_data, val_data, te_data, tr_inds, val_inds, te_inds, transform, config):
@@ -79,7 +80,7 @@ def train_epoch(
     preds = []
     ground_truths = []
     
-    for batch in loader:
+    for batch in tqdm(loader, total=len(loader), desc="Training" ):
         optimizer.zero_grad()
         
         # Select the seed edges from which the batch was created
@@ -270,7 +271,7 @@ def get_model(sample_batch, config):
         
         config.model = 'pna'
         model = Interleaved_Edges(num_features=n_feats, num_gnn_layers=config.n_gnn_layers, n_classes=2, 
-                                    n_hidden=round(config.n_hidden), edge_updates=config.emlps, edge_dim=e_dim, 
+                                    n_hidden=round(config.n_hidden), edge_dim=e_dim, 
                                     final_dropout=config.final_dropout, deg=deg, config=config,
                                 )
         config.model = 'interleaved'
