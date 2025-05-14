@@ -93,8 +93,8 @@ def setup_config(args):
     if not args.testing:
         # Initialize wandb
         wandb.init(
-            project="AML_GNN",
-            name=f"{args.data}_{timestamp}",
+            project=f"AML_{args.data}",
+            name=f"{args.data}_{args.model}_{timestamp}",
             config=config_dict,
             dir=run_dir,
             reinit=True
@@ -159,7 +159,7 @@ def create_config_dict(args, run_dir, log_dir, checkpoint_dir):
 
         config_dict["batch_accum"] = extract_param("batch_accum", args)
         config_dict["clip_grad"] = extract_param("clip_grad", args)
-        
+
         config_dict["n_hidden"] = extract_param("n_hidden", args)
         config_dict["final_dropout"] = extract_param("final_dropout", args)
         config_dict["lr"] = extract_param("lr", args)
@@ -168,6 +168,8 @@ def create_config_dict(args, run_dir, log_dir, checkpoint_dir):
         config_dict["w_ce2"] = extract_param("w_ce2", args)
 
     else:
+        config_dict["batch_accum"] = extract_param("batch_accum", args)
+        config_dict["clip_grad"] = extract_param("clip_grad", args)
         config_dict["lr"] = extract_param("lr", args)
         config_dict["n_hidden"] = extract_param("n_hidden", args)
         config_dict["n_gnn_layers"] = extract_param("n_gnn_layers", args)

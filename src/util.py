@@ -69,7 +69,7 @@ def save_model(model, optimizer, epoch, config):
                 path
             )
 
-    if config.testing:
+    if not config.testing:
         wandb.save(path)
     
 

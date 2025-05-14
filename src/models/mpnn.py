@@ -16,21 +16,24 @@ class MPNN(torch.nn.Module):
         self.node_emb = nn.Linear(num_features, n_hidden)
         self.edge_emb = nn.Linear(edge_dim, n_hidden)
 
-    
+        
+
         self.gnn = GnnHelper(num_gnn_layers=num_gnn_layers, n_hidden=n_hidden, edge_updates=edge_updates, final_dropout=final_dropout,
                             deg=deg, config=config)
         
         self.mlp = nn.Sequential(Linear(n_hidden*3, 50), nn.ReLU(), nn.Dropout(self.final_dropout),Linear(50, 25), nn.ReLU(), nn.Dropout(self.final_dropout),
                             Linear(25, n_classes))
 
-    def forward(self, data):
+    def forward(self, data, emb=False):
         # Initial Embedding Layers
         x = self.node_emb(data.x)
         edge_attr = self.edge_emb(data.edge_attr) 
 
         # Message Passing Layers
         x, edge_attr = self.gnn(x, data.edge_index, edge_attr)
-
+        
+        if emb:
+            return x, edge_attr
         # Prediction Head
         x = x[data.edge_index.T].reshape(-1, 2*self.n_hidden).relu()
         x = torch.cat((x, edge_attr.view(-1, edge_attr.shape[1])), 1)
@@ -49,7 +52,7 @@ class GnnHelper(torch.nn.Module):
         self.final_dropout = final_dropout
         self.config = config    
         self.edge_updates = edge_updates
-
+        #print("config mode", config.model)
     
         self.convs = nn.ModuleList()
         self.emlps = nn.ModuleList()

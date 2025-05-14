@@ -86,10 +86,11 @@ def train_epoch(
 
     batch_accum = config.batch_accum
     batch_count = 0
+    
+    optimizer.zero_grad()
 
     for batch in tqdm(loader, total=len(loader), desc="Training" ):
         
-        batch_count += 1
         # Select the seed edges from which the batch was created
         inds = tr_inds.detach().cpu()
         batch_edge_inds = inds[batch.input_id.detach().cpu()]
@@ -105,28 +106,28 @@ def train_epoch(
 
         pred = out[mask]
         ground_truth = batch.y[mask]
-        
         loss = loss_fn(pred, ground_truth)
-        
-        loss = loss / batch_accum
 
         loss.backward()
-
-        if batch_accum == 0 or batch_accum is None or batch_count % batch_accum == 0 or batch_count == len(loader):
-            
-            # clip gradients
-            if config.clip_grad:
-                torch.nn.utils.clip_grad_norm_(model.parameters(), 1.0)
-
-            optimizer.step()
-            optimizer.zero_grad()
-
+        batch_count += 1
 
         total_loss += float(loss) * pred.numel()
         total_examples += pred.numel()
 
         preds.append(pred.detach().cpu())
         ground_truths.append(ground_truth.detach().cpu())
+
+        if batch_accum == 0 or batch_count == batch_accum:        
+            if config.clip_grad:
+                torch.nn.utils.clip_grad_norm_(model.parameters(), 1.0)
+            
+            optimizer.step()
+            optimizer.zero_grad()
+            batch_count = 0
+
+    if batch_count > 0:
+        optimizer.step()
+        optimizer.zero_grad()
 
     pred = torch.cat(preds, dim=0).numpy()
     ground_truth = torch.cat(ground_truths, dim=0).numpy()
@@ -245,10 +246,10 @@ def train(
         logging.info(f"Loss: {total_loss}")
         
         if not config.testing:
-            wandb.log({"Train": {"F1": round(f1,4), "Precision": round(precision,4), "Recall": round(recall,4), "PR-AUC": round(auc,4)}})
-            wandb.log({"Val": {"F1": round(val_f1,4), "Precision": round(val_precision,4), "Recall": round(val_recall,4), "PR-AUC": round(val_auc,4)}})
-            wandb.log({"Test": {"F1": round(te_f1,4), "Precision": round(te_precision,4), "Recall": round(te_recall,4), "PR-AUC": round(te_auc,4)}})
-            wandb.log({"Loss": total_loss})
+            wandb.log({"Train": {"F1": round(f1,4), "Precision": round(precision,4), "Recall": round(recall,4), "PR-AUC": round(auc,4)}}, step=epoch)
+            wandb.log({"Val": {"F1": round(val_f1,4), "Precision": round(val_precision,4), "Recall": round(val_recall,4), "PR-AUC": round(val_auc,4)}}, step=epoch)
+            wandb.log({"Test": {"F1": round(te_f1,4), "Precision": round(te_precision,4), "Recall": round(te_recall,4), "PR-AUC": round(te_auc,4)}}, step=epoch)
+            wandb.log({"Loss": total_loss}, step=epoch)
 
         # Model selection based on validation F1 score
         if epoch == 0:
@@ -258,6 +259,8 @@ def train(
             best_val_f1 = val_f1
             best_state_dict = copy.deepcopy(model.state_dict())
             logging.info({"best_test_f1": f"{te_f1:.4f}"})
+            if not config.testing:
+                wandb.log({"best_test_f1": f"{te_f1:.4f}"}, step=epoch)
             
             # Save best model
             if config.save_model:
@@ -267,7 +270,7 @@ def train(
     if best_state_dict is not None:
         model.load_state_dict(best_state_dict)
     
-    if config.testing:
+    if not config.testing:
         wandb.finish()
     return model
 

@@ -6,7 +6,7 @@ import wandb
 from src.models.mpnn import GnnHelper
 from torch_geometric.nn import Linear
 from src.util import unpack_dict_ns
-class Interleaved_Edges(torch.nn.Module):
+class Full_Fusion(torch.nn.Module):
     def __init__(self, num_features, n_classes=2, n_hidden=100, 
                  edge_dim=None, final_dropout=0.5, 
                 deg=None, config=None,
@@ -28,7 +28,7 @@ class Interleaved_Edges(torch.nn.Module):
         
         scpy = unpack_dict_ns(config, 1)
         #print(scpy)
-        self.transformer = nn.TransformerEncoder(
+        self.transformer1 = nn.TransformerEncoder(
             nn.TransformerEncoderLayer(
                 d_model=scpy.n_hidden,
                 nhead=scpy.no_heads,
@@ -41,10 +41,36 @@ class Interleaved_Edges(torch.nn.Module):
         )
 
         tcpy = unpack_dict_ns(config, 2)
+        self.fusion = nn.Sequential( Linear(2*tcpy.n_hidden, tcpy.n_hidden)
+            ,nn.ReLU(),nn.Dropout(tcpy.dropout),Linear(tcpy.n_hidden, tcpy.n_hidden),nn.ReLU(),
+            nn.Dropout(tcpy.dropout),
+            Linear(tcpy.n_hidden, 2*tcpy.n_hidden),
+        )
+
+
+        tcpy = unpack_dict_ns(config, 2)
         self.gnn2 = GnnHelper(num_gnn_layers=tcpy.n_gnn_layers, n_hidden=tcpy.n_hidden, edge_updates=config.emlps, final_dropout=tcpy.final_dropout,
                             deg=deg, config=tcpy)
 
+        scpy = unpack_dict_ns(config, 2)
+        self.transformer2 = nn.TransformerEncoder(
+                    nn.TransformerEncoderLayer(
+                        d_model=scpy.n_hidden,
+                        nhead=scpy.no_heads,
+                        dim_feedforward=2*scpy.n_hidden,
+                        dropout=scpy.dropout,
+                        activation='relu',
+                        batch_first=True
+                    ),
+                    num_layers=scpy.n_layers,
+        )
 
+        tcpy = unpack_dict_ns(config, 2)
+        self.fusion2 = nn.Sequential( Linear(2*tcpy.n_hidden, tcpy.n_hidden)
+            ,nn.ReLU(),nn.Dropout(tcpy.dropout),Linear(tcpy.n_hidden, tcpy.n_hidden),nn.ReLU(),
+            nn.Dropout(tcpy.dropout),
+            Linear(tcpy.n_hidden, 2*tcpy.n_hidden),
+        )
 
         self.mlp = nn.Sequential(Linear(n_hidden*3, 50), nn.ReLU(), nn.Dropout(self.final_dropout),Linear(50, 25), nn.ReLU(), nn.Dropout(self.final_dropout),
                             Linear(25, n_classes))
@@ -55,16 +81,19 @@ class Interleaved_Edges(torch.nn.Module):
         edge_attr = self.edge_emb(data.edge_attr) 
 
         # First GNN Layer
-        x, edge_attr = self.gnn1(x, data.edge_index, edge_attr)
+        xa, edge_attr1a = self.gnn1(x, data.edge_index, edge_attr)
         
         # Transformer Layer
-        edge_attr = edge_attr.unsqueeze(0)
-        edge_attr = self.transformer(edge_attr)
-        edge_attr = edge_attr.squeeze(0)
+        edge_attr2a = edge_attr.unsqueeze(0)
+        edge_attr2a = self.transformer(edge_attr2a)
+        edge_attr2a = edge_attr2a.squeeze(0)
         
+
+
         # Second GNN Layer
-        x, edge_attr = self.gnn2(x, data.edge_index, edge_attr)
+        x, edge_attr = self.fusion(x, data.edge_index, torch.cat((edge_attr, edge_attr1a), dim=1))
         
+
         
         # Prediction Head
         x = x[data.edge_index.T].reshape(-1, 2*self.n_hidden).relu()
