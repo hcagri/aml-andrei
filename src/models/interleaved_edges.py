@@ -3,7 +3,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 import torch
 import wandb
-from src.models.mpnn import GnnHelper
+from src.models.mpnn import GnnHelper, MPNN
 from torch_geometric.nn import Linear
 from src.util import unpack_dict_ns
 class Interleaved_Edges(torch.nn.Module):
@@ -26,7 +26,7 @@ class Interleaved_Edges(torch.nn.Module):
                             deg=deg, config=fcpy)
         
         scpy = unpack_dict_ns(config, 1)
-        print(scpy)
+        #print(scpy)
         self.transformer = nn.TransformerEncoder(
             nn.TransformerEncoderLayer(
                 d_model=scpy.n_hidden,

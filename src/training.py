@@ -19,6 +19,8 @@ from .models.interleaved_edges import Interleaved_Edges
 
 from tqdm import tqdm
 import wandb
+from types import SimpleNamespace
+
 
 def get_loaders(tr_data, val_data, te_data, tr_inds, val_inds, te_inds, transform, config):
 
@@ -57,7 +59,7 @@ def train_epoch(
     optimizer: Optimizer, 
     loss_fn: Module, 
     tr_inds: torch.Tensor, 
-    device: torch.device
+    config: SimpleNamespace,
 ) -> Tuple[float, np.ndarray, np.ndarray]:
     """Trains the model for one epoch.
     
@@ -67,7 +69,7 @@ def train_epoch(
         optimizer: Optimizer for training
         loss_fn: Loss function
         tr_inds: Training indices
-        device: Device to train on
+        config: Configuration object
         
     Returns:
         Tuple containing:
@@ -80,9 +82,14 @@ def train_epoch(
     preds = []
     ground_truths = []
     
+    device = config.device
+
+    batch_accum = config.batch_accum
+    batch_count = 0
+
     for batch in tqdm(loader, total=len(loader), desc="Training" ):
-        optimizer.zero_grad()
         
+        batch_count += 1
         # Select the seed edges from which the batch was created
         inds = tr_inds.detach().cpu()
         batch_edge_inds = inds[batch.input_id.detach().cpu()]
@@ -98,10 +105,22 @@ def train_epoch(
 
         pred = out[mask]
         ground_truth = batch.y[mask]
+        
         loss = loss_fn(pred, ground_truth)
+        
+        loss = loss / batch_accum
 
         loss.backward()
-        optimizer.step()
+
+        if batch_accum == 0 or batch_accum is None or batch_count % batch_accum == 0 or batch_count == len(loader):
+            
+            # clip gradients
+            if config.clip_grad:
+                torch.nn.utils.clip_grad_norm_(model.parameters(), 1.0)
+
+            optimizer.step()
+            optimizer.zero_grad()
+
 
         total_loss += float(loss) * pred.numel()
         total_examples += pred.numel()
@@ -204,7 +223,7 @@ def train(
         logging.info(f'****** EPOCH {epoch} ******')
         
         # Training phase
-        total_loss, pred, ground_truth = train_epoch(tr_loader, model, optimizer, loss_fn, tr_inds, config.device)
+        total_loss, pred, ground_truth = train_epoch(tr_loader, model, optimizer, loss_fn, tr_inds, config)
         
         # Compute training metrics
         f1, auc, precision, recall = compute_binary_metrics(pred, ground_truth)
@@ -248,6 +267,8 @@ def train(
     if best_state_dict is not None:
         model.load_state_dict(best_state_dict)
     
+    if config.testing:
+        wandb.finish()
     return model
 
 

@@ -7,6 +7,7 @@ import os
 import sys
 import json
 import copy
+import wandb
 
 
 def extract_param(parameter_name: str, config, model: str = None) -> float:
@@ -58,13 +59,18 @@ def set_seed(seed: int = 0) -> None:
 
 def save_model(model, optimizer, epoch, config):
     # Save the model in a dictionary
+    path = os.path.join(config.checkpoint_dir, f'epoch_{epoch+1}.tar')
+    
     torch.save({
                 'epoch': epoch + 1,
                 'model_state_dict': model.state_dict(),
                 'optimizer_state_dict': optimizer.state_dict()
                 }, 
-                os.path.join(config.checkpoint_dir, f'epoch_{epoch+1}.tar')
+                path
             )
+
+    if config.testing:
+        wandb.save(path)
     
 
 def unpack_dict_ns(config, arch_id):
