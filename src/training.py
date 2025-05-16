@@ -16,7 +16,7 @@ from torch.nn import Module
 from .util import add_arange_ids, save_model
 from .models.mpnn import MPNN
 from .models.interleaved_edges import Interleaved_Edges
-
+from .models.fullfusion import Full_Fusion
 from tqdm import tqdm
 import wandb
 from types import SimpleNamespace
@@ -40,6 +40,7 @@ def compute_binary_metrics(preds: np.array, labels: np.array):
     :param labels: Binary target labels
     :return: Accuracy, illicit precision/ recall/ F1, and ROC AUC scores
     """
+    
     probs = preds[:,1]
     preds = preds.argmax(axis=-1)
 
@@ -117,7 +118,8 @@ def train_epoch(
         preds.append(pred.detach().cpu())
         ground_truths.append(ground_truth.detach().cpu())
 
-        if batch_accum == 0 or batch_count == batch_accum:        
+        if batch_accum == 0 or batch_count == batch_accum: 
+            #print("Batch accum")       
             if config.clip_grad:
                 torch.nn.utils.clip_grad_norm_(model.parameters(), 1.0)
             
@@ -260,7 +262,7 @@ def train(
             best_state_dict = copy.deepcopy(model.state_dict())
             logging.info({"best_test_f1": f"{te_f1:.4f}"})
             if not config.testing:
-                wandb.log({"best_test_f1": f"{te_f1:.4f}"}, step=epoch)
+                wandb.log({"best_test_f1": round(te_f1, 4)}, step=epoch)
             
             # Save best model
             if config.save_model:
@@ -297,7 +299,13 @@ def get_model(sample_batch, config):
                                     n_hidden=round(config.n_hidden), edge_dim=e_dim, 
                                     final_dropout=config.final_dropout, deg=deg, config=config,
                                 )
-        
+    elif config.model == 'fusion':
+        model = Full_Fusion(num_features=n_feats, n_classes=2, 
+                            n_hidden=round(config.n_hidden), edge_dim=e_dim, 
+                            final_dropout=config.final_dropout, deg=deg, config=config,
+                        )
+
+
     else:
         model = MPNN(num_features=n_feats, num_gnn_layers=config.n_gnn_layers, n_classes=2, 
                       n_hidden=round(config.n_hidden), edge_updates=config.emlps, edge_dim=e_dim, 

@@ -87,11 +87,11 @@ def unpack_dict_ns(config, arch_id):
     
     # Unpack the architecture parameters
     arch_params = config.arch[arch_id]
-    #print(arch_params)
+    print(arch_params)
     configpy = copy.deepcopy(config)
     delattr(configpy,'arch')
 
-    
+    #print(arch_params)
     for key, value in arch_params.items():
         #print(key, value)
         setattr(configpy, key, value)

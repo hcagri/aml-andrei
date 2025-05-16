@@ -151,8 +151,16 @@ def create_config_dict(args, run_dir, log_dir, checkpoint_dir):
                 temp_dict["no_heads"] = extract_param("no_heads", args, model)
                 temp_dict["n_hidden"] = extract_param("n_hidden", args, model)
                 temp_dict["n_layers"] = extract_param("n_layers", args, model)
+                temp_dict["activation"] = extract_param("activation", args, model)
                 temp_dict["dropout"] = extract_param("dropout", args, model)
-            
+            elif model == "fmlp":
+                temp_dict["model"] = model
+                temp_dict["n_hidden"] = extract_param("n_hidden", args, model)
+                temp_dict["dropout"] = extract_param("dropout", args, model)
+                temp_dict["activation"] = extract_param("activation", args, model)
+
+            elif model == "gmu":
+                raise NotImplementedError("GMU fusion not implemented")    
             arch_params.append(temp_dict)
         
         config_dict["arch"] = arch_params
