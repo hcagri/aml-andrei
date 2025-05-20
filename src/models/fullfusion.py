@@ -12,14 +12,29 @@ class Full_Fusion(torch.nn.Module):
                  edge_dim=None, final_dropout=0.5, 
                 deg=None, config=None,
                 ):
+        """
+        Instantiates the Full-Fusion model.
+        The full-fusion model is a combination of two GNNs and two transformers.
+        The flow of the model is as follows:
+        Node & Edge Embedding -> GNN1  -> |               | ->     GNN2     -> | 
+                                          | -> Fusion1 -> |                    | -> Fusion2 -> MLP
+        Edge Embedding -> Transformer1 -> |               | -> Transformer2 -> | 
+
+        Args:
+        - num_features (int): Number of features in the input graph.
+        - n_classes (int): Number of classes in the output graph.
+        - n_hidden (int): Number of hidden units in the model.
+        - edge_dim (int): Number of features in the edge embedding.
+        - final_dropout (float): Dropout rate for the final layer.
+        - deg (int): Degree of the graph.
+        - config (dict): Configuration dictionary containing the model parameters.
+        """
         super().__init__()
         #print(config)
         self.config = config
         self.n_hidden = n_hidden
         self.final_dropout = final_dropout
 
-        self.node_emb = nn.Linear(num_features, n_hidden)
-        self.edge_emb = nn.Linear(edge_dim, n_hidden)
 
         gnn1_config = unpack_dict_ns(config, 0)
         transformer1_config = unpack_dict_ns(config, 1)
@@ -29,12 +44,16 @@ class Full_Fusion(torch.nn.Module):
         transformer2_config = unpack_dict_ns(config, 4)
         fusion2_config = unpack_dict_ns(config, 5)
 
-        #print(fcpy)   
+
+        self.node_emb_gnn = nn.Linear(num_features, gnn1_config.n_hidden)
+        self.edge_emb_gnn = nn.Linear(edge_dim, gnn1_config.n_hidden)
+
+        self.edge_emb_tr = nn.Linear(edge_dim, transformer1_config.n_hidden)
+           
         self.gnn1 = GnnHelper(num_gnn_layers=gnn1_config.n_gnn_layers, n_hidden=gnn1_config.n_hidden, edge_updates=config.emlps, final_dropout=gnn1_config.final_dropout,
                             deg=deg, config=gnn1_config)
         
-        print(transformer1_config)
-        #print(scpy)
+        
         self.transformer1 = nn.TransformerEncoder(
             nn.TransformerEncoderLayer(
                 d_model=transformer1_config.n_hidden,
@@ -74,37 +93,44 @@ class Full_Fusion(torch.nn.Module):
                             Linear(25, n_classes))
 
     def forward(self, data):
+        """
+        Forward pass of the Full-Fusion model.
+        """
         # Initial Embedding Layers
-        x = self.node_emb(data.x)
-        edge_attr = self.edge_emb(data.edge_attr) 
+        x_gnn = self.node_emb_gnn(data.x)
+        edge_a_gnn = self.edge_emb_gnn(data.edge_attr)
+
+        edge_a_t = self.edge_emb_tr(data.edge_attr) 
 
         # First GNN Layer
-        x_gnn, edge_a_gnn = self.gnn1(x, data.edge_index, edge_attr)
+        x_gnn, edge_a_gnn = self.gnn1(x_gnn, data.edge_index, edge_a_gnn)
         
         # Transformer Layer
-        edge_a_t = edge_attr.unsqueeze(0)
+        edge_a_t = edge_a_t.unsqueeze(0)
         edge_a_t = self.transformer1(edge_a_t)
         edge_a_t = edge_a_t.squeeze(0)
         
 
-        #print(edge_a_gnn.shape, edge_a_t.shape)
-        #print((torch.cat((edge_a_gnn, edge_a_t), dim=1)).shape)
-        # Second GNN Layer
+        # Fusion Layer
         edge_a_gnn, edge_a_t = self.fusion1(torch.cat((edge_a_gnn, edge_a_t), dim=1))
 
-        #print(edge_a_gnn.shape, edge_a_t.shape)
-                
 
+        # Second GNN Layer
         x_gnn, edge_a_gnn = self.gnn2(x_gnn, data.edge_index, edge_a_gnn)
-        
+
+        # Second Transformer Layer
         edge_a_t = self.transformer2(edge_a_t.unsqueeze(0))
         edge_a_t = edge_a_t.squeeze(0)
 
+        # Second Fusion Layer
         edge_a_gnn, edge_a_t = self.fusion2(torch.cat((edge_a_gnn, edge_a_t), dim=1))
 
+        # Concatenate the edge embeddings of the GNN and Transformer layers
         edge_attr = torch.cat((edge_a_gnn, edge_a_t), dim=1)
+        
+        # Keep the node features from the GNN 
         x = x_gnn
-        #print(edge_attr.shape, x.shape)
+        
         # Prediction Head
         x = x[data.edge_index.T].reshape(-1, 2*self.n_hidden).relu()
         x = torch.cat((x, edge_attr.view(-1, edge_attr.shape[1])), 1)

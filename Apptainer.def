@@ -9,6 +9,9 @@ From: ubuntu:latest
     results /results
     main.py /main.py
     model_settings.json /model_settings.json
+    model_settings_pna.json /model_settings_pna.json
+    model_settings_interleaved.json /model_settings_gcn.json
+    model_settings_fusion.json /model_settings_fusion.json
 
 %post
     # Update and install necessary packages

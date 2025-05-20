@@ -21,10 +21,23 @@ def extract_param(parameter_name: str, config, model: str = None) -> float:
     Returns:
     - float: Value of the specified parameter.
     """
+    
+    # Get the architecture name from the config
+    # as it is used to retrieve the right model settings
+    
+    modL = ""
+    if config.model is not None:
+        modL = config.model
 
-    file_path = './model_settings.json'
+    file_path = f'./model_settings_{modL}.json'
+    
+    # print("-------------------")
+    # print(f"Loading model settings from {file_path}")
+    
+    
     with open(file_path, "r") as file:
         data = json.load(file)
+    
     md = None
     if model is None:
         md = config.model

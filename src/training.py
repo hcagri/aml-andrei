@@ -346,6 +346,10 @@ def train_gnn(tr_data, val_data, te_data, tr_inds, val_inds, te_inds, config):
     
     # Define loss function and Initialize optimizer
     optimizer = torch.optim.Adam(model.parameters(), lr=config.lr)
+
+    if config.optimizer == "adamw":
+        optimizer = torch.optim.AdamW(model.parameters(), lr=config.lr, weight_decay=1e-5)
+
     loss_fn = torch.nn.CrossEntropyLoss(weight=torch.FloatTensor([config.w_ce1, config.w_ce2]).to(device))
 
     # Train the model

@@ -81,7 +81,13 @@ def setup_config(args):
     # Print the config 
     print("----- CONFIG -----")
     for key, value in config_dict.items():
-        pprint(f"{key}: {value}")
+        if key == "arch":
+            print("Architecture:")
+            for i, arch in enumerate(value):
+                print(f" Sub-Model {i+1}:")
+                for arch_key, arch_value in arch.items():
+                    print(f"   {arch_key}: {arch_value}")
+        else: print(f"{key}: {value}")
     print(2*"------------------")
 
     # Save config to file
@@ -170,7 +176,10 @@ def create_config_dict(args, run_dir, log_dir, checkpoint_dir):
 
         config_dict["n_hidden"] = extract_param("n_hidden", args)
         config_dict["final_dropout"] = extract_param("final_dropout", args)
+        
+        config_dict["optimizer"] = extract_param("optimizer", args)
         config_dict["lr"] = extract_param("lr", args)
+        
         config_dict["loss"] = "ce"
         config_dict["w_ce1"] = extract_param("w_ce1", args)
         config_dict["w_ce2"] = extract_param("w_ce2", args)
