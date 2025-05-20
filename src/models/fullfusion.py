@@ -16,6 +16,8 @@ class Full_Fusion(torch.nn.Module):
         Instantiates the Full-Fusion model.
         The full-fusion model is a combination of two GNNs and two transformers.
         The flow of the model is as follows:
+
+        
         Node & Edge Embedding -> GNN1  -> |               | ->     GNN2     -> | 
                                           | -> Fusion1 -> |                    | -> Fusion2 -> MLP
         Edge Embedding -> Transformer1 -> |               | -> Transformer2 -> | 

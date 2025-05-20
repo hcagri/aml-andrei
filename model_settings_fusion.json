@@ -81,9 +81,9 @@
 
   "fmlp":{
     "params": {
-      "n_hidden": 20,
-      "dropout": 0.12,
-      "activation": "relu"
+      "n_hidden": 30,
+      "dropout": 0.4,
+      "activation": "gelu"
     },
     "bayes_opt_params": {
 
@@ -103,6 +103,10 @@
       
       "optimizer": "adamw",
       "lr": 0.0006116418195373612,
+      "scheduler": "cosine",
+
+      
+
       "n_hidden": 20,
       "n_gnn_layers": 2,
       "loss": "ce",

@@ -29,7 +29,6 @@ class Fusion_Layer(torch.nn.Module):
             self.fusion = nn.Sequential(Linear(input_dim_a+input_dim_b, config.n_hidden),
                                         activation,nn.Dropout(config.dropout),
                                         Linear(config.n_hidden, input_dim_a+input_dim_b),
-                                        activation,nn.Dropout(config.dropout),
             )
         elif config.model == "gmu":
             self.fusion = None

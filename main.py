@@ -178,6 +178,10 @@ def create_config_dict(args, run_dir, log_dir, checkpoint_dir):
         config_dict["final_dropout"] = extract_param("final_dropout", args)
         
         config_dict["optimizer"] = extract_param("optimizer", args)
+        
+        config_dict["scheduler"] = extract_param("scheduler", args)
+        config_dict["warmup"] = extract_param("warmup", args)
+
         config_dict["lr"] = extract_param("lr", args)
         
         config_dict["loss"] = "ce"
@@ -187,7 +191,14 @@ def create_config_dict(args, run_dir, log_dir, checkpoint_dir):
     else:
         config_dict["batch_accum"] = extract_param("batch_accum", args)
         config_dict["clip_grad"] = extract_param("clip_grad", args)
+        
+        config_dict["optimizer"] = extract_param("optimizer", args)
+        
+        config_dict["scheduler"] = extract_param("scheduler", args)
+        config_dict["warmup"] = extract_param("warmup", args)
+        
         config_dict["lr"] = extract_param("lr", args)
+
         config_dict["n_hidden"] = extract_param("n_hidden", args)
         config_dict["n_gnn_layers"] = extract_param("n_gnn_layers", args)
         config_dict["loss"] = "ce"
