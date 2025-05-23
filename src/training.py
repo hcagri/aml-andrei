@@ -473,7 +473,7 @@ def train_gnn(tr_data, val_data, te_data, tr_inds, val_inds, te_inds, config):
     # Define loss function and Initialize optimizer
     optimizer = torch.optim.Adam(model.parameters(), lr=config.lr)
     
-    print(config)
+    #print(config)
     if config.optimizer is not None:
         if config.optimizer == "adamw":
             optimizer = torch.optim.AdamW(
@@ -485,7 +485,7 @@ def train_gnn(tr_data, val_data, te_data, tr_inds, val_inds, te_inds, config):
         scheduler = cosine_with_warmup_scheduler(
             optimizer=optimizer,
             num_warmup_epochs=config.warmup,
-            max_epoch=config.epochs,
+            max_epoch=int(config.epochs*2),
         )
 
     loss_fn = torch.nn.CrossEntropyLoss(

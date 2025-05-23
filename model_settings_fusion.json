@@ -91,7 +91,11 @@
     "header": "run,tb,lr,n_hidden,n_mlp_layers,n_gnn_layers,loss,w_ce1,w_ce2,norm_method,dropout,final_dropout,epoch,tr_acc,tr_prec,tr_rec,tr_f1,tr_auc,val_acc,val_prec,val_rec,val_f1,val_auc,te_acc,te_prec,te_rec,te_f1,te_auc\n"
   },
 
-
+  "gmu":{
+    "params":{
+      "n_hidden": 20
+    }
+  },
 
   
   "fusion":{
@@ -102,9 +106,10 @@
       "clip_grad": true,
       
       "optimizer": "adamw",
-      "lr": 0.0006116418195373612,
-      "scheduler": "cosine",
+      "lr": 0.001,
 
+      "scheduler": "cosine",
+      "warmup": 5,
       
 
       "n_hidden": 20,
