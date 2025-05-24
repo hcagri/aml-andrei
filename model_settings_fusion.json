@@ -110,6 +110,7 @@
 
       "scheduler": "cosine",
       "warmup": 5,
+      "false_epoch_mult" : 1.0,
       
 
       "n_hidden": 20,

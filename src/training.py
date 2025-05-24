@@ -485,7 +485,7 @@ def train_gnn(tr_data, val_data, te_data, tr_inds, val_inds, te_inds, config):
         scheduler = cosine_with_warmup_scheduler(
             optimizer=optimizer,
             num_warmup_epochs=config.warmup,
-            max_epoch=int(config.epochs*2),
+            max_epoch=int(config.epochs*config.false_epoch_mult),
         )
 
     loss_fn = torch.nn.CrossEntropyLoss(
