@@ -31,13 +31,17 @@ class Fusion_Layer(torch.nn.Module):
                                         Linear(config.n_hidden, input_dim_a+input_dim_b),
             )
         elif config.model == "gmu":
-            self.fusion = GmuHelper
-            raise NotImplementedError("GMU fusion not implemented")
+            self.fusion = GmuHelper(
+                input_dim_a=input_dim_a, input_dim_b=input_dim_b,
+                hidden_dim=n_hidden, config=config
+            )
+            #raise NotImplementedError("GMU fusion not implemented")
 
 
 
     def forward(self, data):
         # Initial Embedding Layers
+        #print("self.config.model", self.config.model)
         if self.config.model == "fmlp":
             out = self.fusion(data)
 
@@ -64,7 +68,6 @@ class GmuHelper(torch.nn.Module):
         
         This implementation is based on the two-input GMU fusion layer described in the paper
         "Gated Multimodal Units for Information Fusion" by Arevalo et al. (2017).
-
     """
     
     def __init__(self, input_dim_a=20, input_dim_b=20,
@@ -93,7 +96,7 @@ class GmuHelper(torch.nn.Module):
     def forward(self, edge_attr1, edge_attr2):
         """
         edge_attr1: Tensor of shape [num_edges, input_dim_a]
-        edge_attr2: Tensor of shape [num_edges, input_dim_b]
+        edge_attr2: Tensor of shape [num_edges, input_dim_b]W
         """
         # 1. Encode the edge attributes using two separate MLPs
         # with a tanh activation function

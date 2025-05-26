@@ -72,7 +72,7 @@
   "transformer":{
     "params":{
       "no_heads": 2,
-      "n_hidden": 40,
+      "n_hidden": 20,
       "n_layers": 1,
       "dropout": 0.2,
       "activation": "gelu"
@@ -93,14 +93,15 @@
 
   "gmu":{
     "params":{
-      "n_hidden": 20
+      "n_hidden": 20,
+      "dropout": 0.2
     }
   },
 
   
   "fusion":{
       "params": {
-      "architecture": ["pna", "transformer", "fmlp", "pna", "transformer", "fmlp"],
+      "architecture": ["pna", "transformer", "gmu", "pna", "transformer", "gmu"],
       
       "batch_accum": 8,
       "clip_grad": true,

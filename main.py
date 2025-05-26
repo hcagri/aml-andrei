@@ -112,103 +112,168 @@ def setup_config(args):
     return config
 
 def create_config_dict(args, run_dir, log_dir, checkpoint_dir):
-    # Create config dictionary with all args included
+    # Base config
     config_dict = {
-        # Training configuration
         "epochs": args.n_epochs,
         "batch_size": args.batch_size,
         "model": args.model,
         "data": args.data,
         "num_neighs": args.num_neighs,
-        
-        
-        # Directories
         "run_dir": run_dir,
         "log_dir": log_dir,
         "checkpoint_dir": checkpoint_dir,
         "output_dir": args.output_dir,
         "data_path": args.data_path,
-        
-        # Other args
         "seed": args.seed,
         "device": torch.device(args.device if torch.cuda.is_available() else "cpu"),
         "emlps": args.emlps,
-        "save_model": args.save_model if hasattr(args, 'save_model') else False
+        "save_model": getattr(args, 'save_model', False),
     }
 
-    if args.model == "interleaved" or args.model == "fusion":
+    # Model-specific parameter mapping
+    model_param_map = {
+        "gin":    ["lr", "n_hidden", "n_gnn_layers", "w_ce1", "w_ce2", "dropout", "final_dropout"],
+        "pna":    ["lr", "n_hidden", "n_gnn_layers", "w_ce1", "w_ce2", "dropout", "final_dropout"],
+        "transformer": ["no_heads", "n_hidden", "n_layers", "activation", "dropout"],
+        "fmlp":   ["n_hidden", "dropout", "activation"],
+        "gmu":    ["n_hidden", "dropout"],
+    }
+
+    if args.model in ["interleaved", "fusion"]:
         arch = extract_param("architecture", args)
         arch_params = []
         for model in arch:
-            temp_dict = {}
-            
-            if model == "gin" or model == "pna":
-                temp_dict["model"] = model
-                temp_dict["lr"] = extract_param("lr", args, model)
-                temp_dict["n_hidden"] = extract_param("n_hidden", args, model)
-                temp_dict["n_gnn_layers"] = extract_param("n_gnn_layers", args, model)
+            temp_dict = {"model": model}
+            for param in model_param_map.get(model, []):
+                temp_dict[param] = extract_param(param, args, model)
+            # Add loss for GNNs
+            if model in ["gin", "pna"]:
                 temp_dict["loss"] = "ce"
-                temp_dict["w_ce1"] = extract_param("w_ce1", args,model)
-                temp_dict["w_ce2"] = extract_param("w_ce2", args,model)
-                temp_dict["dropout"] = extract_param("dropout", args,model)
-                temp_dict["final_dropout"] = extract_param("final_dropout", args,model)
-            elif model == "transformer":
-                temp_dict["model"] = model
-                temp_dict["no_heads"] = extract_param("no_heads", args, model)
-                temp_dict["n_hidden"] = extract_param("n_hidden", args, model)
-                temp_dict["n_layers"] = extract_param("n_layers", args, model)
-                temp_dict["activation"] = extract_param("activation", args, model)
-                temp_dict["dropout"] = extract_param("dropout", args, model)
-            elif model == "fmlp":
-                temp_dict["model"] = model
-                temp_dict["n_hidden"] = extract_param("n_hidden", args, model)
-                temp_dict["dropout"] = extract_param("dropout", args, model)
-                temp_dict["activation"] = extract_param("activation", args, model)
-
-            elif model == "gmu":
-                raise NotImplementedError("GMU fusion not implemented")    
             arch_params.append(temp_dict)
-        
         config_dict["arch"] = arch_params
 
-
-        config_dict["n_hidden"] = extract_param("n_hidden", args)
-        config_dict["final_dropout"] = extract_param("final_dropout", args)
-        
-        
-
-        config_dict["lr"] = extract_param("lr", args)
-        
+        # Top-level fusion/interleaved config
+        for param in ["n_hidden", "final_dropout", "lr", "w_ce1", "w_ce2"]:
+            config_dict[param] = extract_param(param, args)
         config_dict["loss"] = "ce"
-        config_dict["w_ce1"] = extract_param("w_ce1", args)
-        config_dict["w_ce2"] = extract_param("w_ce2", args)
-
     else:
-
-        config_dict["n_hidden"] = extract_param("n_hidden", args)
-        config_dict["n_gnn_layers"] = extract_param("n_gnn_layers", args)
+        # Single model config
+        for param in ["n_hidden", "n_gnn_layers", "w_ce1", "w_ce2", "dropout", "final_dropout"]:
+            config_dict[param] = extract_param(param, args)
         config_dict["loss"] = "ce"
-        config_dict["w_ce1"] = extract_param("w_ce1", args)
-        config_dict["w_ce2"] = extract_param("w_ce2", args)
-        config_dict["dropout"] = extract_param("dropout", args)
-        config_dict["final_dropout"] = extract_param("final_dropout", args)
 
-    config_dict["batch_accum"] = extract_param("batch_accum", args)
-    config_dict["clip_grad"] = extract_param("clip_grad", args)
-    
-    config_dict["optimizer"] = extract_param("optimizer", args)
-    
-    config_dict["scheduler"] = extract_param("scheduler", args)
-    config_dict["warmup"] = extract_param("warmup", args)
-    config_dict["false_epoch_mult"] = extract_param("false_epoch_mult", args)
-    
-    config_dict["lr"] = extract_param("lr", args)
-    # Add any other args that weren't explicitly handled
+    # General training params
+    for param in ["batch_accum", "clip_grad", "optimizer", "scheduler", "warmup", "false_epoch_mult", "lr"]:
+        config_dict[param] = extract_param(param, args)
+
+    # Add any other args not already included
     for key, value in vars(args).items():
         if key not in config_dict:
             config_dict[key] = value
 
     return config_dict
+
+
+# def create_config_dict(args, run_dir, log_dir, checkpoint_dir):
+#     # Create config dictionary with all args included
+#     config_dict = {
+#         # Training configuration
+#         "epochs": args.n_epochs,
+#         "batch_size": args.batch_size,
+#         "model": args.model,
+#         "data": args.data,
+#         "num_neighs": args.num_neighs,
+        
+        
+#         # Directories
+#         "run_dir": run_dir,
+#         "log_dir": log_dir,
+#         "checkpoint_dir": checkpoint_dir,
+#         "output_dir": args.output_dir,
+#         "data_path": args.data_path,
+        
+#         # Other args
+#         "seed": args.seed,
+#         "device": torch.device(args.device if torch.cuda.is_available() else "cpu"),
+#         "emlps": args.emlps,
+#         "save_model": args.save_model if hasattr(args, 'save_model') else False
+#     }
+
+#     if args.model == "interleaved" or args.model == "fusion":
+#         arch = extract_param("architecture", args)
+#         arch_params = []
+#         for model in arch:
+#             temp_dict = {}
+            
+#             if model == "gin" or model == "pna":
+#                 temp_dict["model"] = model
+#                 temp_dict["lr"] = extract_param("lr", args, model)
+#                 temp_dict["n_hidden"] = extract_param("n_hidden", args, model)
+#                 temp_dict["n_gnn_layers"] = extract_param("n_gnn_layers", args, model)
+#                 temp_dict["loss"] = "ce"
+#                 temp_dict["w_ce1"] = extract_param("w_ce1", args,model)
+#                 temp_dict["w_ce2"] = extract_param("w_ce2", args,model)
+#                 temp_dict["dropout"] = extract_param("dropout", args,model)
+#                 temp_dict["final_dropout"] = extract_param("final_dropout", args,model)
+#             elif model == "transformer":
+#                 temp_dict["model"] = model
+#                 temp_dict["no_heads"] = extract_param("no_heads", args, model)
+#                 temp_dict["n_hidden"] = extract_param("n_hidden", args, model)
+#                 temp_dict["n_layers"] = extract_param("n_layers", args, model)
+#                 temp_dict["activation"] = extract_param("activation", args, model)
+#                 temp_dict["dropout"] = extract_param("dropout", args, model)
+#             elif model == "fmlp":
+#                 temp_dict["model"] = model
+#                 temp_dict["n_hidden"] = extract_param("n_hidden", args, model)
+#                 temp_dict["dropout"] = extract_param("dropout", args, model)
+#                 temp_dict["activation"] = extract_param("activation", args, model)
+
+#             elif model == "gmu":
+#                 temp_dict["model"] = model
+#                 temp_dict["n_hidden"] = extract_param("n_hidden", args, model)
+#                 temp_dict["dropout"] = extract_param("dropout", args, model)
+#             arch_params.append(temp_dict)
+        
+#         config_dict["arch"] = arch_params
+
+
+#         config_dict["n_hidden"] = extract_param("n_hidden", args)
+#         config_dict["final_dropout"] = extract_param("final_dropout", args)
+        
+        
+
+#         config_dict["lr"] = extract_param("lr", args)
+        
+#         config_dict["loss"] = "ce"
+#         config_dict["w_ce1"] = extract_param("w_ce1", args)
+#         config_dict["w_ce2"] = extract_param("w_ce2", args)
+
+#     else:
+
+#         config_dict["n_hidden"] = extract_param("n_hidden", args)
+#         config_dict["n_gnn_layers"] = extract_param("n_gnn_layers", args)
+#         config_dict["loss"] = "ce"
+#         config_dict["w_ce1"] = extract_param("w_ce1", args)
+#         config_dict["w_ce2"] = extract_param("w_ce2", args)
+#         config_dict["dropout"] = extract_param("dropout", args)
+#         config_dict["final_dropout"] = extract_param("final_dropout", args)
+
+#     config_dict["batch_accum"] = extract_param("batch_accum", args)
+#     config_dict["clip_grad"] = extract_param("clip_grad", args)
+    
+#     config_dict["optimizer"] = extract_param("optimizer", args)
+    
+#     config_dict["scheduler"] = extract_param("scheduler", args)
+#     config_dict["warmup"] = extract_param("warmup", args)
+#     config_dict["false_epoch_mult"] = extract_param("false_epoch_mult", args)
+    
+#     config_dict["lr"] = extract_param("lr", args)
+#     # Add any other args that weren't explicitly handled
+#     for key, value in vars(args).items():
+#         if key not in config_dict:
+#             config_dict[key] = value
+
+#     return config_dict
 
 
 def main():
