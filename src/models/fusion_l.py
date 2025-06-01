@@ -96,20 +96,14 @@ class GmuHelper(torch.nn.Module):
     def forward(self, edge_attr1, edge_attr2):
         """
         edge_attr1: Tensor of shape [num_edges, input_dim_a]
-        edge_attr2: Tensor of shape [num_edges, input_dim_b]W
+        edge_attr2: Tensor of shape [num_edges, input_dim_b]
         """
-        # 1. Encode the edge attributes using two separate MLPs
-        # with a tanh activation function
         h1 = self.fc1(edge_attr1)  
         h2 = self.fc2(edge_attr2)  
 
 
-        # 2. Concatenate the edge attributes and pass them through a sigmoid activation function
-        # to get the gating vector
         z_input = torch.cat([edge_attr1, edge_attr2], dim=-1)  
         z = torch.sigmoid(self.z_gate(z_input))                
 
-        # 3. Compute the fused representation using the gating vector
-        # and the encoded edge attributes
         fused = z * h1 + (1 - z) * h2
         return fused

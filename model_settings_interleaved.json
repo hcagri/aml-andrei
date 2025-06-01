@@ -79,13 +79,24 @@
     }
   },
 
+  "rpearl":{
+    "params": {
+      "n_sample_aggr_layers": 2, "pearl_mlp_out": 16, "sample_aggr_hidden_dims": 32, "pe_dims": 8, "batch_norm": true, 
+      "use_identity_basis": false, "pearl_k": 3, "pearl_act": "relu", 
+      "n_mlp_layers": 2, "mlp_hidden_dims": 8, "mlp_use_bn": true, "mlp_activation": "relu", "mlp_dropout_prob": 0.3
+      ,"n_hidden":20
+    }
+  },
+
 
 
 
   "interleaved": {
     "params": {
-      "architecture": ["pna", "transformer", "pna"],
-      
+      "architecture": ["pna", "transformer", "pna","rpearl"],
+
+      "use_pe": true,
+
       "batch_accum": 8,
       "clip_grad": true,
       
@@ -99,6 +110,7 @@
 
       
       "n_hidden": 20,
+      "n_hidden_edge": 20,
       "n_gnn_layers": 2,
       "loss": "ce",
       "w_ce1": 1.0003967674742307, 

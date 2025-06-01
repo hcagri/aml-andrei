@@ -82,7 +82,7 @@
   "fmlp":{
     "params": {
       "n_hidden": 30,
-      "dropout": 0.4,
+      "dropout": 0.5,
       "activation": "gelu"
     },
     "bayes_opt_params": {
@@ -103,15 +103,17 @@
       "params": {
       "architecture": ["pna", "transformer", "gmu", "pna", "transformer", "gmu"],
       
+      "use_pe": true,
+      
       "batch_accum": 8,
       "clip_grad": true,
       
       "optimizer": "adamw",
-      "lr": 0.001,
+      "lr": 0.0009,
 
       "scheduler": "cosine",
       "warmup": 5,
-      "false_epoch_mult" : 1.0,
+      "false_epoch_mult" : 3.0,
       
 
       "n_hidden": 20,

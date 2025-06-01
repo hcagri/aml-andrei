@@ -7,6 +7,7 @@ from src.models.mpnn import GnnHelper
 from torch_geometric.nn import Linear
 from src.util import unpack_dict_ns
 from src.models.fusion_l import Fusion_Layer
+# from src.models.pos_enc import EdgePositionalEncoder
 class Full_Fusion(torch.nn.Module):
     def __init__(self, num_features, n_classes=2, n_hidden=100, 
                  edge_dim=None, final_dropout=0.5, 
@@ -49,6 +50,14 @@ class Full_Fusion(torch.nn.Module):
 
         self.node_emb_gnn = nn.Linear(num_features, gnn1_config.n_hidden)
         self.edge_emb_gnn = nn.Linear(edge_dim, gnn1_config.n_hidden)
+
+        # if config.use_pe:
+        #     self.edge_pos_enc = EdgePositionalEncoder(
+        #         edge_feat_dim=edge_dim,
+        #         out_dim=transformer1_config.n_hidden,
+        #     )
+        # else :
+        #     self.edge_pos_enc = None
 
         self.edge_emb_tr = nn.Linear(edge_dim, transformer1_config.n_hidden)
            
@@ -102,8 +111,13 @@ class Full_Fusion(torch.nn.Module):
         x_gnn = self.node_emb_gnn(data.x)
         edge_a_gnn = self.edge_emb_gnn(data.edge_attr)
 
-        edge_a_t = self.edge_emb_tr(data.edge_attr) 
+        
 
+        # if self.edge_pos_enc is not None:
+        #     edge_a_t = self.edge_pos_enc(data) 
+        # else: 
+        edge_a_t = self.edge_emb_tr(data.edge_attr)
+        
         # First GNN Layer
         x_gnn, edge_a_gnn = self.gnn1(x_gnn, data.edge_index, edge_a_gnn)
         
