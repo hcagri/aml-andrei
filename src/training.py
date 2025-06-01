@@ -156,14 +156,13 @@ def train_epoch(
             optimizer.zero_grad()
             batch_count = 0
 
-
     if batch_count > 0:
         optimizer.step()
         optimizer.zero_grad()
 
     if scheduler is not None:
         scheduler.step()
-    
+
     pred = torch.cat(preds, dim=0).numpy()
     ground_truth = torch.cat(ground_truths, dim=0).numpy()
 
@@ -349,7 +348,9 @@ def train(
                 step=epoch,
             )
             wandb.log({"Loss": total_loss}, step=epoch)
-            wandb.log({"LR": scheduler.get_last_lr()[0] if scheduler else -1.0}, step=epoch)
+            wandb.log(
+                {"LR": scheduler.get_last_lr()[0] if scheduler else -1.0}, step=epoch
+            )
 
         # Model selection based on validation F1 score
         if epoch == 0:
@@ -472,20 +473,20 @@ def train_gnn(tr_data, val_data, te_data, tr_inds, val_inds, te_inds, config):
 
     # Define loss function and Initialize optimizer
     optimizer = torch.optim.Adam(model.parameters(), lr=config.lr)
-    
-    #print(config)
+
+    # print(config)
     if config.optimizer is not None:
         if config.optimizer == "adamw":
             optimizer = torch.optim.AdamW(
                 model.parameters(), lr=config.lr, weight_decay=1e-5
             )
-    
+
     scheduler = None
     if config.scheduler == "cosine":
         scheduler = cosine_with_warmup_scheduler(
             optimizer=optimizer,
             num_warmup_epochs=config.warmup,
-            max_epoch=int(config.epochs*config.false_epoch_mult),
+            max_epoch=int(config.epochs * config.false_epoch_mult),
         )
 
     loss_fn = torch.nn.CrossEntropyLoss(

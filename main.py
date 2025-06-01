@@ -223,7 +223,7 @@ def create_config_dict(args, run_dir, log_dir, checkpoint_dir):
             "mlp_use_bn",
             "mlp_activation",
             "mlp_dropout_prob",
-            "n_hidden"
+            "n_hidden",
         ],
     }
 
