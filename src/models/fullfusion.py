@@ -7,7 +7,7 @@ from src.models.mpnn import GnnHelper
 from torch_geometric.nn import Linear
 from src.util import unpack_dict_ns
 from src.models.fusion_l import Fusion_Layer
-
+from src.models.pos_enc.pearl import get_PEARL_wrapper
 
 # from src.models.pos_enc import EdgePositionalEncoder
 class Full_Fusion(torch.nn.Module):
@@ -46,6 +46,14 @@ class Full_Fusion(torch.nn.Module):
         self.n_hidden = n_hidden
         self.final_dropout = final_dropout
 
+
+        pe_config = None
+
+
+        if config.use_pe:
+            pe_config = unpack_dict_ns(config, -1)
+
+
         gnn1_config = unpack_dict_ns(config, 0)
         transformer1_config = unpack_dict_ns(config, 1)
         fusion1_config = unpack_dict_ns(config, 2)
@@ -57,15 +65,12 @@ class Full_Fusion(torch.nn.Module):
         self.node_emb_gnn = nn.Linear(num_features, gnn1_config.n_hidden)
         self.edge_emb_gnn = nn.Linear(edge_dim, gnn1_config.n_hidden)
 
-        # if config.use_pe:
-        #     self.edge_pos_enc = EdgePositionalEncoder(
-        #         edge_feat_dim=edge_dim,
-        #         out_dim=transformer1_config.n_hidden,
-        #     )
-        # else :
-        #     self.edge_pos_enc = None
 
         self.edge_emb_tr = nn.Linear(edge_dim, transformer1_config.n_hidden)
+
+        if pe_config is not None:
+            self.posenc = get_PEARL_wrapper(pe_config)
+
 
         self.gnn1 = GnnHelper(
             num_gnn_layers=gnn1_config.n_gnn_layers,
@@ -147,6 +152,15 @@ class Full_Fusion(torch.nn.Module):
         # else:
         edge_a_t = self.edge_emb_tr(data.edge_attr)
 
+
+        if self.config.use_pe:
+            data.x = x_gnn
+            data.edge_attr = edge_a_gnn
+            data = self.posenc(data)
+
+            x_gnn = data.x
+            edge_a_gnn = data.edge_attr
+        
         # First GNN Layer
         x_gnn, edge_a_gnn = self.gnn1(x_gnn, data.edge_index, edge_a_gnn)
 

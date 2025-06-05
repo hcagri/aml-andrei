@@ -150,3 +150,16 @@ class MLPLayer(nn.Module):
         X = self.activation(X)  # [***, D_out]
         X = self.dropout(X)  # [***, D_out]
         return X
+
+
+def create_mlp(in_dims: int, out_dims: int, cfg: Any, use_bias: bool = True) -> MLP:
+    return MLP(
+        cfg.n_mlp_layers,
+        in_dims,
+        cfg.mlp_hidden_dims,
+        out_dims,
+        cfg.mlp_use_bn,
+        cfg.mlp_activation,
+        cfg.mlp_dropout_prob,
+        use_bias=use_bias,
+    )

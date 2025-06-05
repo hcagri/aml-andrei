@@ -245,8 +245,9 @@ def create_config_dict(args, run_dir, log_dir, checkpoint_dir):
             config_dict[param] = extract_param(param, args)
         config_dict["loss"] = "ce"
 
-        if args.model == "interleaved":
-            config_dict["use_pe"] = extract_param("use_pe", args, "interleaved")
+        # Add positional encoding if applicable
+        if args.model == "interleaved" or args.model == "fusion":
+            config_dict["use_pe"] = extract_param("use_pe", args, args.model)
 
     else:
         # Single model config

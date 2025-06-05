@@ -20,9 +20,6 @@ class Interleaved_Edges(torch.nn.Module):
         final_dropout=0.5,
         deg=None,
         config=None,
-        no_heads_transformer=4,
-        num_layers_transformer=2,
-        dropout_rate_transformer=0.1,
     ):
         super().__init__()
         # print(config)

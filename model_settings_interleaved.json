@@ -71,11 +71,11 @@
   },
   "transformer":{
     "params":{
-      "no_heads": 4,
+      "no_heads": 2,
       "n_hidden": 20,
       "n_layers": 1,
-      "dropout": 0.009,
-      "activation": "relu"
+      "dropout": 0.1,
+      "activation": "gelu"
     }
   },
 
@@ -97,16 +97,16 @@
 
       "use_pe": true,
 
-      "batch_accum": 8,
+      "batch_accum": 16,
       "clip_grad": true,
       
       "optimizer": "adamw",
       
       
-      "lr": 0.001,
+      "lr": 0.00095,
       "scheduler": "cosine",
       "warmup": 5,
-      "false_epoch_mult" : 1.0,
+      "false_epoch_mult" : 1.66,
 
       
       "n_hidden": 20,

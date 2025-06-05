@@ -95,6 +95,8 @@ class PEARLPositionalEncoder(nn.Module):
         if mlp_nlayers > 0:
             if mlp_nlayers == 1:
                 assert mlp_hid == mlp_out
+            print(
+                f"PEARLPositionalEncoder: Using MLP with {mlp_nlayers} layers, hidden size {mlp_hid}, output size {mlp_out}, activation {pearl_act}")
             self.mlp_nlayers = mlp_nlayers
             self.layers = nn.ModuleList(
                 [
@@ -127,6 +129,8 @@ class PEARLPositionalEncoder(nn.Module):
         self.k = k
         self.basis = basis
 
+        print()
+
     def forward(
         self, Lap, W, edge_index: torch.Tensor, batch: torch.Tensor, final=True
     ) -> torch.Tensor:
@@ -141,6 +145,7 @@ class PEARLPositionalEncoder(nn.Module):
         device = edge_index.device
         # for loop N times for each Nx1 e
         if isinstance(W[0], int):
+            print("FSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSs")
             # split into N*B*[Nx1]
             j = 0
             for lap, w in zip(Lap, W):
@@ -180,17 +185,6 @@ class PEARLPositionalEncoder(nn.Module):
 ####################################### ADDITIONS ####################################
 
 
-def create_mlp(in_dims: int, out_dims: int, cfg: Any, use_bias: bool = True) -> MLP:
-    return MLP(
-        cfg.n_mlp_layers,
-        in_dims,
-        cfg.mlp_hidden_dims,
-        out_dims,
-        cfg.mlp_use_bn,
-        cfg.mlp_activation,
-        cfg.mlp_dropout_prob,
-        use_bias=use_bias,
-    )
 
 
 def get_PEARL_wrapper(config):
@@ -248,7 +242,6 @@ class PEARLWrapper(nn.Module):
 
         combined = torch.cat([x, pos_enc.to(device)], dim=-1)
 
-        # Lazy MLP initialization (if not set)
         if self.out_dim is not None and self.mlp is None:
             in_dim = combined.shape[-1]
             self.mlp = nn.Sequential(
