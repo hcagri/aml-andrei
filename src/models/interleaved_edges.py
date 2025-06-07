@@ -21,6 +21,7 @@ class Interleaved_Edges(torch.nn.Module):
         final_dropout=0.5,
         deg=None,
         config=None,
+        index_=None,
     ):
         super().__init__()
         # print(config)
@@ -37,13 +38,16 @@ class Interleaved_Edges(torch.nn.Module):
 
         fcpy = unpack_dict_ns(config, 0)
         # print(fcpy)
+        self.gnn1 = None
         if fcpy.model.startswith("mega"):
+            self.mega = True
             self.gnn1 = MEGAGnnHelper(
                 num_gnn_layers=fcpy.n_gnn_layers,
                 n_hidden=fcpy.n_hidden,
                 edge_updates=config.emlps,
                 final_dropout=fcpy.final_dropout,
                 deg=deg,
+                index_= index_,
                 args=fcpy,
             )
         else:
@@ -71,7 +75,7 @@ class Interleaved_Edges(torch.nn.Module):
         )
 
         tcpy = unpack_dict_ns(config, 2)
-        
+        self.gnn2 = None
         if tcpy.model.startswith("mega"):
             self.gnn2 = MEGAGnnHelper(
                 num_gnn_layers=tcpy.n_gnn_layers,
@@ -80,6 +84,7 @@ class Interleaved_Edges(torch.nn.Module):
                 final_dropout=tcpy.final_dropout,
                 deg=deg,
                 args=tcpy,
+                index_=index_,
             )
         else:
             self.gnn2 = GnnHelper(
@@ -109,6 +114,9 @@ class Interleaved_Edges(torch.nn.Module):
         x = self.node_emb(data.x)
         edge_attr = self.edge_emb(data.edge_attr)
 
+        simp_edge_batch = None
+        if self.mega:
+            simp_edge_batch = data.simp_edge_batch
         # print("x", x.shape, "edge_attr", edge_attr.shape)
 
         # print("data.x", data.x.shape, "data.edge_attr", data.edge_attr.shape)
@@ -126,7 +134,12 @@ class Interleaved_Edges(torch.nn.Module):
         # print("x", x.shape, "edge_attr", edge_attr.shape)
 
         # First GNN Layer
-        x, edge_attr = self.gnn1(x, data.edge_index, edge_attr)
+        if self.mega:
+            x, edge_attr = self.gnn1(
+                x, data.edge_index, edge_attr, simp_edge_batch=simp_edge_batch
+            )
+        else:
+            x, edge_attr = self.gnn1(x, data.edge_index, edge_attr)
 
         # Transformer Layer
         edge_attr = edge_attr.unsqueeze(0)
@@ -134,7 +147,12 @@ class Interleaved_Edges(torch.nn.Module):
         edge_attr = edge_attr.squeeze(0)
 
         # Second GNN Layer
-        x, edge_attr = self.gnn2(x, data.edge_index, edge_attr)
+        if self.mega:
+            x, edge_attr = self.gnn2(
+                x, data.edge_index, edge_attr, simp_edge_batch=simp_edge_batch
+            )
+        else:
+            x, edge_attr = self.gnn2(x, data.edge_index, edge_attr)
 
         # print("x", x.shape, "edge_attr", edge_attr.shape)
         # Prediction Head

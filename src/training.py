@@ -407,6 +407,7 @@ def get_model(sample_batch, config):
             final_dropout=config.final_dropout,
             deg=deg,
             config=config,
+            index_=index_,
         )
     elif config.model == "fusion":
         model = Full_Fusion(
@@ -417,6 +418,7 @@ def get_model(sample_batch, config):
             final_dropout=config.final_dropout,
             deg=deg,
             config=config,
+            index_=index_,
         )
 
     elif config.model.startswith("mega"):

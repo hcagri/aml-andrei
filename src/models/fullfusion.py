@@ -4,6 +4,7 @@ import torch.nn.functional as F
 import torch
 import wandb
 from src.models.mpnn import GnnHelper
+from src.models.megagnn import MEGAGnnHelper
 from torch_geometric.nn import Linear
 from src.util import unpack_dict_ns
 from src.models.fusion_l import Fusion_Layer
@@ -20,6 +21,7 @@ class Full_Fusion(torch.nn.Module):
         final_dropout=0.5,
         deg=None,
         config=None,
+        index_=None,
     ):
         """
         Instantiates the Full-Fusion model.
@@ -71,15 +73,27 @@ class Full_Fusion(torch.nn.Module):
         if pe_config is not None:
             self.posenc = get_PEARL_wrapper(pe_config)
 
-
-        self.gnn1 = GnnHelper(
-            num_gnn_layers=gnn1_config.n_gnn_layers,
-            n_hidden=gnn1_config.n_hidden,
-            edge_updates=config.emlps,
-            final_dropout=gnn1_config.final_dropout,
-            deg=deg,
-            config=gnn1_config,
-        )
+        self.gnn1 = None
+        if gnn1_config.model.startswith("mega"):
+            self.mega = True
+            self.gnn1 = MEGAGnnHelper(
+                num_gnn_layers=gnn1_config.n_gnn_layers,
+                n_hidden=gnn1_config.n_hidden,
+                edge_updates=config.emlps,
+                final_dropout=gnn1_config.final_dropout,
+                deg=deg,
+                index_=index_,
+                args=gnn1_config,
+            )
+        else:
+            self.gnn1 = GnnHelper(
+                num_gnn_layers=gnn1_config.n_gnn_layers,
+                n_hidden=gnn1_config.n_hidden,
+                edge_updates=config.emlps,
+                final_dropout=gnn1_config.final_dropout,
+                deg=deg,
+                config=gnn1_config,
+            )
 
         self.transformer1 = nn.TransformerEncoder(
             nn.TransformerEncoderLayer(
@@ -99,15 +113,27 @@ class Full_Fusion(torch.nn.Module):
             n_hidden=fusion1_config.n_hidden,
             config=fusion1_config,
         )
-
-        self.gnn2 = GnnHelper(
-            num_gnn_layers=gnn2_config.n_gnn_layers,
-            n_hidden=gnn2_config.n_hidden,
-            edge_updates=config.emlps,
-            final_dropout=gnn2_config.final_dropout,
-            deg=deg,
-            config=gnn2_config,
-        )
+        self.gnn2 = None
+        if gnn2_config.model.startswith("mega"):
+            self.mega = True
+            self.gnn2 = MEGAGnnHelper(
+                num_gnn_layers=gnn2_config.n_gnn_layers,
+                n_hidden=gnn2_config.n_hidden,
+                edge_updates=config.emlps,
+                final_dropout=gnn2_config.final_dropout,
+                deg=deg,
+                index_=index_,
+                args=gnn2_config,
+            )
+        else:
+            self.gnn2 = GnnHelper(
+                num_gnn_layers=gnn2_config.n_gnn_layers,
+                n_hidden=gnn2_config.n_hidden,
+                edge_updates=config.emlps,
+                final_dropout=gnn2_config.final_dropout,
+                deg=deg,
+                config=gnn2_config,
+            )
 
         self.transformer2 = nn.TransformerEncoder(
             nn.TransformerEncoderLayer(
@@ -153,6 +179,11 @@ class Full_Fusion(torch.nn.Module):
         edge_a_t = self.edge_emb_tr(data.edge_attr)
 
 
+        simp_edge_batch = None
+        if self.mega:
+            simp_edge_batch = data.simp_edge_batch
+
+        
         if self.config.use_pe:
             data.x = x_gnn
             data.edge_attr = edge_a_gnn
@@ -162,8 +193,13 @@ class Full_Fusion(torch.nn.Module):
             edge_a_gnn = data.edge_attr
         
         # First GNN Layer
-        x_gnn, edge_a_gnn = self.gnn1(x_gnn, data.edge_index, edge_a_gnn)
-
+        if self.mega:
+            x_gnn, edge_a_gnn = self.gnn1(
+                x_gnn, data.edge_index, edge_a_gnn, simp_edge_batch=simp_edge_batch
+            )
+        else:
+            x_gnn, edge_a_gnn = self.gnn1(x_gnn, data.edge_index, edge_a_gnn)
+        
         # Transformer Layer
         edge_a_t = edge_a_t.unsqueeze(0)
         edge_a_t = self.transformer1(edge_a_t)
@@ -173,8 +209,13 @@ class Full_Fusion(torch.nn.Module):
         edge_a_gnn, edge_a_t = self.fusion1(torch.cat((edge_a_gnn, edge_a_t), dim=1))
 
         # Second GNN Layer
-        x_gnn, edge_a_gnn = self.gnn2(x_gnn, data.edge_index, edge_a_gnn)
-
+        if self.mega:
+            x_gnn, edge_a_gnn = self.gnn2(
+                x_gnn, data.edge_index, edge_a_gnn, simp_edge_batch=simp_edge_batch
+            )
+        else:
+            x_gnn, edge_a_gnn = self.gnn2(x_gnn, data.edge_index, edge_a_gnn)
+        
         # Second Transformer Layer
         edge_a_t = self.transformer2(edge_a_t.unsqueeze(0))
         edge_a_t = edge_a_t.squeeze(0)
