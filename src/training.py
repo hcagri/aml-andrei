@@ -14,6 +14,7 @@ from torch.optim import Optimizer
 from torch.nn import Module
 
 from .util import add_arange_ids, save_model
+from .models.megagnn import MultiMPNN
 from .models.mpnn import MPNN
 from .models.interleaved_edges import Interleaved_Edges
 from .models.fullfusion import Full_Fusion
@@ -388,6 +389,8 @@ def get_model(sample_batch, config):
     """
     n_feats = sample_batch.x.shape[1]
     e_dim = sample_batch.edge_attr.shape[1]
+    
+    index_ = sample_batch.simp_edge_batch 
 
     d = degree(
         sample_batch.edge_index[1], num_nodes=sample_batch.num_nodes, dtype=torch.long
@@ -415,6 +418,12 @@ def get_model(sample_batch, config):
             deg=deg,
             config=config,
         )
+
+    elif config.model.startswith("mega"):
+        
+        model = MultiMPNN(num_features=n_feats, num_gnn_layers=config.n_gnn_layers, n_classes=2, 
+                      n_hidden=round(config.n_hidden), edge_updates=config.emlps, edge_dim=e_dim, 
+                      final_dropout=config.final_dropout, index_=index_, deg=deg, args=config)
 
     else:
         model = MPNN(

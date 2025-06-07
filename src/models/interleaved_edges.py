@@ -4,6 +4,7 @@ import torch.nn.functional as F
 import torch
 import wandb
 from src.models.mpnn import GnnHelper
+from src.models.megagnn import MEGAGnnHelper
 from torch_geometric.nn import Linear
 from src.util import unpack_dict_ns
 from src.models.pos_enc.pearl import get_PEARL_wrapper
@@ -36,14 +37,24 @@ class Interleaved_Edges(torch.nn.Module):
 
         fcpy = unpack_dict_ns(config, 0)
         # print(fcpy)
-        self.gnn1 = GnnHelper(
-            num_gnn_layers=fcpy.n_gnn_layers,
-            n_hidden=fcpy.n_hidden,
-            edge_updates=config.emlps,
-            final_dropout=fcpy.final_dropout,
-            deg=deg,
-            config=fcpy,
-        )
+        if fcpy.model.startswith("mega"):
+            self.gnn1 = MEGAGnnHelper(
+                num_gnn_layers=fcpy.n_gnn_layers,
+                n_hidden=fcpy.n_hidden,
+                edge_updates=config.emlps,
+                final_dropout=fcpy.final_dropout,
+                deg=deg,
+                args=fcpy,
+            )
+        else:
+            self.gnn1 = GnnHelper(
+                num_gnn_layers=fcpy.n_gnn_layers,
+                n_hidden=fcpy.n_hidden,
+                edge_updates=config.emlps,
+                final_dropout=fcpy.final_dropout,
+                deg=deg,
+                config=fcpy,
+            )
 
         scpy = unpack_dict_ns(config, 1)
         # print(scpy)
@@ -60,14 +71,25 @@ class Interleaved_Edges(torch.nn.Module):
         )
 
         tcpy = unpack_dict_ns(config, 2)
-        self.gnn2 = GnnHelper(
-            num_gnn_layers=tcpy.n_gnn_layers,
-            n_hidden=tcpy.n_hidden,
-            edge_updates=config.emlps,
-            final_dropout=tcpy.final_dropout,
-            deg=deg,
-            config=tcpy,
-        )
+        
+        if tcpy.model.startswith("mega"):
+            self.gnn2 = MEGAGnnHelper(
+                num_gnn_layers=tcpy.n_gnn_layers,
+                n_hidden=tcpy.n_hidden,
+                edge_updates=config.emlps,
+                final_dropout=tcpy.final_dropout,
+                deg=deg,
+                args=tcpy,
+            )
+        else:
+            self.gnn2 = GnnHelper(
+                num_gnn_layers=tcpy.n_gnn_layers,
+                n_hidden=tcpy.n_hidden,
+                edge_updates=config.emlps,
+                final_dropout=tcpy.final_dropout,
+                deg=deg,
+                config=tcpy,
+            )
 
         self.mlp = nn.Sequential(
             Linear(n_hidden * 3, 50),

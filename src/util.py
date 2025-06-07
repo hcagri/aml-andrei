@@ -115,3 +115,18 @@ def unpack_dict_ns(config, arch_id):
     # Convert the architecture parameters to SimpleNamespace
 
     return configpy
+
+
+def find_parallel_edges(edge_index):
+    simplified_edge_mapping = {}
+    simplified_edge_batch = []
+    i = 0
+    for edge in edge_index.T:
+        tuple_edge = tuple(edge.tolist())
+        if tuple_edge not in simplified_edge_mapping:
+            simplified_edge_mapping[tuple_edge] = i
+            i += 1
+        simplified_edge_batch.append(simplified_edge_mapping[tuple_edge])
+    simplified_edge_batch = torch.LongTensor(simplified_edge_batch)
+
+    return simplified_edge_batch

@@ -13,7 +13,7 @@ from torch_geometric.typing import OptTensor
 import datatable as dt
 from datetime import datetime
 from datatable import f, join, sort
-
+from src.util import find_parallel_edges
 
 def format_dataset(inPath):
     r"""
@@ -179,6 +179,8 @@ class AMLData:
         )
         edge_attr = torch.tensor(df_edges.loc[:, edge_features].to_numpy()).float()
 
+        simp_edge_batch = find_parallel_edges(edge_index)
+
         n_days = int(timestamps.max() / (3600 * 24) + 1)
         n_samples = y.shape[0]
         logging.info(
@@ -235,6 +237,7 @@ class AMLData:
         tr_inds = torch.cat(split_inds[0])
         val_inds = torch.cat(split_inds[1])
         te_inds = torch.cat(split_inds[2])
+        
 
         logging.info(
             f"Total train samples: {tr_inds.shape[0] / y.shape[0] * 100 :.2f}% || IR: "
@@ -273,12 +276,17 @@ class AMLData:
             timestamps,
         )
 
+        tr_simp_edge_batch, val_simp_edge_batch, te_simp_edge_batch = simp_edge_batch[e_tr], simp_edge_batch[e_val], simp_edge_batch
+
+
+
         tr_data = GraphData(
             x=tr_x,
             y=tr_y,
             edge_index=tr_edge_index,
             edge_attr=tr_edge_attr,
             timestamps=tr_edge_times,
+            simp_edge_batch=tr_simp_edge_batch,
         )
         val_data = GraphData(
             x=val_x,
@@ -286,6 +294,7 @@ class AMLData:
             edge_index=val_edge_index,
             edge_attr=val_edge_attr,
             timestamps=val_edge_times,
+            simp_edge_batch=val_simp_edge_batch,
         )
         te_data = GraphData(
             x=te_x,
@@ -293,6 +302,7 @@ class AMLData:
             edge_index=te_edge_index,
             edge_attr=te_edge_attr,
             timestamps=te_edge_times,
+            simp_edge_batch=te_simp_edge_batch,
         )
 
         # Normalize data
