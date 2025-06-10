@@ -120,7 +120,7 @@
 
   "interleaved": {
     "params": {
-      "architecture": ["megapna", "transformer", "megapna","rpearl"],
+      "architecture": ["pna", "transformer", "pna","rpearl"],
 
       "use_pe": true,
 

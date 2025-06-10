@@ -5,13 +5,14 @@ From: ubuntu:latest
     requirements.txt /requirements.txt
     env.yml /env.yml
     src /src
-    data /data
+    genagg /genagg
     results /results
     main.py /main.py
     model_settings.json /model_settings.json
     model_settings_pna.json /model_settings_pna.json
     model_settings_interleaved.json /model_settings_gcn.json
     model_settings_fusion.json /model_settings_fusion.json
+    model_settings_megapna.json /model_settings_megapna.json
 
 %post
     # Update and install necessary packages
@@ -42,6 +43,10 @@ From: ubuntu:latest
     # Ensure /results is writable
     mkdir -p /results
     chmod -R 777 /results
+
+    mkdir -p /data
+    chmod -R 777 /data
+
 
     # Clean up
     apt-get clean && rm -rf /var/lib/apt/lists/*

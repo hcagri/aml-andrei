@@ -39,6 +39,8 @@ class Interleaved_Edges(torch.nn.Module):
         fcpy = unpack_dict_ns(config, 0)
         # print(fcpy)
         self.gnn1 = None
+        self.mega = False
+        
         if fcpy.model.startswith("mega"):
             self.mega = True
             self.gnn1 = MEGAGnnHelper(
