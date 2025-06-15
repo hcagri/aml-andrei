@@ -205,6 +205,7 @@ def create_config_dict(args, run_dir, log_dir, checkpoint_dir):
             "w_ce2",
             "dropout",
             "final_dropout",
+            "use_pe",
         ],
         "megapna": [
             "lr",

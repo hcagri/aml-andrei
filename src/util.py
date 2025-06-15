@@ -8,6 +8,7 @@ import sys
 import json
 import copy
 import wandb
+from types import SimpleNamespace
 
 
 def extract_param(parameter_name: str, config, model: str = None) -> float:
@@ -130,3 +131,21 @@ def find_parallel_edges(edge_index):
     simplified_edge_batch = torch.LongTensor(simplified_edge_batch)
 
     return simplified_edge_batch
+
+
+
+def get_pearl_config(config, model=None):
+    file_path = f"./model_settings_{model}.json"
+
+    # print("-------------------")
+    # print(f"Loading model settings from {file_path}")
+    with open(file_path, "r") as file:
+        data = json.load(file)
+    
+    cfg = copy.deepcopy(config)
+
+    param_dict = data.get("rpearl", {}).get("params", {})
+    for key, value in param_dict.items():
+        setattr(cfg, key, value)
+        
+    return cfg

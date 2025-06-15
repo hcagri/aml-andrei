@@ -50,7 +50,7 @@ class Full_Fusion(torch.nn.Module):
 
 
         pe_config = None
-
+        self.mega = False
 
         if config.use_pe:
             pe_config = unpack_dict_ns(config, -1)

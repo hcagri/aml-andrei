@@ -150,12 +150,12 @@
   "fusion": {
     "params": {
       "architecture": [
-        "megapna",
+        "pna",
         "transformer",
-        "gmu",
-        "megapna",
+        "fmlp",
+        "pna",
         "transformer",
-        "gmu",
+        "fmlp",
         "rpearl"
       ],
 
