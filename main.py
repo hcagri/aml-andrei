@@ -235,7 +235,6 @@ def create_config_dict(args, run_dir, log_dir, checkpoint_dir):
             "reverse_mp_lp",
             "node_agg_type",
         ],
-
         "transformer": ["no_heads", "n_hidden", "n_layers", "activation", "dropout"],
         "fmlp": ["n_hidden", "dropout", "activation"],
         "gmu": ["n_hidden", "dropout"],

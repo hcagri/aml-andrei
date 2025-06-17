@@ -29,7 +29,6 @@ class MPNN(torch.nn.Module):
         if config.use_pe:
             pecpy = get_pearl_config(config, config.model)
             self.posenc = get_PEARL_wrapper(pecpy)
-        
 
         self.node_emb = nn.Linear(num_features, n_hidden)
         self.edge_emb = nn.Linear(edge_dim, n_hidden)
@@ -66,7 +65,6 @@ class MPNN(torch.nn.Module):
 
             x = data.x
             edge_attr = data.edge_attr
-
 
         # Message Passing Layers
         x, edge_attr = self.gnn(x, data.edge_index, edge_attr)

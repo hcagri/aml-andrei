@@ -133,7 +133,6 @@ def find_parallel_edges(edge_index):
     return simplified_edge_batch
 
 
-
 def get_pearl_config(config, model=None):
     file_path = f"./model_settings_{model}.json"
 
@@ -141,11 +140,11 @@ def get_pearl_config(config, model=None):
     # print(f"Loading model settings from {file_path}")
     with open(file_path, "r") as file:
         data = json.load(file)
-    
+
     cfg = copy.deepcopy(config)
 
     param_dict = data.get("rpearl", {}).get("params", {})
     for key, value in param_dict.items():
         setattr(cfg, key, value)
-        
+
     return cfg

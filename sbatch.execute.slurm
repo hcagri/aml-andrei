@@ -1,19 +1,31 @@
 #!/bin/bash
 #SBATCH --job-name=aml_training
 #SBATCH --partition=st,general
-#SBATCH --qos=short             # Request Quality of Service. Default is 'short' (maximum run time: 4 hours)
-#SBATCH --time=1:00:00          # Request run time. Default is 1 minute
+#SBATCH --qos=medium
+#SBATCH --time=1-12:00:00
 #SBATCH --nodes=1
 #SBATCH --ntasks=1
 #SBATCH --cpus-per-task=4
-#SBATCH --mem=4000             # Request GB of RAM
-#SBATCH --gres=gpu:1            # Request 1 GPU
-#SBATCH --output=slurm-%x-%j.out
-#SBATCH --error=slurm-%x-%j.err
-#SBATCH --mail-type=END         # Set mail type to 'END' to receive a mail when the job finishes.
+#SBATCH --mem=4000
+#SBATCH --gres=gpu:a40:1
+#SBATCH --output=slurm_outputs/slurm-%x-%j.out
+#SBATCH --error=slurm_errors/slurm-%x-%j.err
+#SBATCH --mail-type=BEGIN,END
 
-# Path to your SIF file
 CONTAINER="aml_container.sif"
+OVERLAY="storage_overlay.img"
+
+#TODO: change to your results path
+RESULTPATH="/results:/results" 
+
+#TODO: change to your data path
+DATAPATH= "/data:/data" 
 
 # Run command inside the container
-srun /usr/bin/apptainer run --nv $CONTAINER --model pna --data Small_HI --n_epochs 2 --output_dir /tmp/results
+srun /usr/bin/apptainer run --nv -B "$RESULTPATH" -B "$DATAPATH" $CONTAINER \
+  --model interleaved \  # Change to your desired model
+  --data Small_HI \ # Change to your desired dataset
+  --n_epochs 60 \
+  --batch_size 256 \
+  --save_model \
+  --emlps

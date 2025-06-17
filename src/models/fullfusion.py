@@ -173,9 +173,7 @@ class Full_Fusion(torch.nn.Module):
         x_gnn = self.node_emb_gnn(data.x)
         edge_a_gnn = self.edge_emb_gnn(data.edge_attr)
 
-        # if self.edge_pos_enc is not None:
-        #     edge_a_t = self.edge_pos_enc(data)
-        # else:
+
         edge_a_t = self.edge_emb_tr(data.edge_attr)
 
 
@@ -183,7 +181,7 @@ class Full_Fusion(torch.nn.Module):
         if self.mega:
             simp_edge_batch = data.simp_edge_batch
 
-        
+        # Positional Encoding        
         if self.config.use_pe:
             data.x = x_gnn
             data.edge_attr = edge_a_gnn

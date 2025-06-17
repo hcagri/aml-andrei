@@ -1,3 +1,7 @@
+"""
+This is an implementation of a cosine learning rate scheduler with warmup, as featured in the FraudGT paper repository (https://dl.acm.org/doi/10.1145/3677052.3698648 , https://github.com/junhongmit/FraudGT/tree/main).
+"""
+
 from torch.optim import Adagrad, AdamW, RMSprop, Optimizer
 import torch.optim as optim
 import math

@@ -23,6 +23,24 @@ class Interleaved_Edges(torch.nn.Module):
         config=None,
         index_=None,
     ):
+        """
+        Instantiates the Interleaved model.
+        
+        The interleaved model is a combination of two GNNs and two transformers.
+        The flow of the model is as follows:
+        Node & Edge Embedding -> GNN1  -> | -> Transformer1   | ->     GNN2     -> MLP
+
+        Args:
+        - num_features (int): Number of features in the input graph.
+        - n_classes (int): Number of classes in the output graph.
+        - n_hidden (int): Number of hidden units in the model.
+        - n_hidden_edge (int): Number of hidden units for edge features.
+        - edge_dim (int): Number of features in the edge embedding.
+        - final_dropout (float): Dropout rate for the final layer.
+        - deg (int): Degree of the graph.
+        - config (dict): Configuration dictionary containing the model parameters.
+        
+        """
         super().__init__()
         # print(config)
         self.config = config
@@ -40,7 +58,7 @@ class Interleaved_Edges(torch.nn.Module):
         # print(fcpy)
         self.gnn1 = None
         self.mega = False
-        
+
         if fcpy.model.startswith("mega"):
             self.mega = True
             self.gnn1 = MEGAGnnHelper(
@@ -49,7 +67,7 @@ class Interleaved_Edges(torch.nn.Module):
                 edge_updates=config.emlps,
                 final_dropout=fcpy.final_dropout,
                 deg=deg,
-                index_= index_,
+                index_=index_,
                 args=fcpy,
             )
         else:
@@ -63,7 +81,8 @@ class Interleaved_Edges(torch.nn.Module):
             )
 
         scpy = unpack_dict_ns(config, 1)
-        # print(scpy)
+
+        
         self.transformer = nn.TransformerEncoder(
             nn.TransformerEncoderLayer(
                 d_model=scpy.n_hidden,
@@ -110,19 +129,15 @@ class Interleaved_Edges(torch.nn.Module):
 
     def forward(self, data):
         # Initial Embedding Layers
-        # print("after")
-        # print("data.x", data.x.shape, "data.edge_attr", data.edge_attr.shape)
-
+        
         x = self.node_emb(data.x)
         edge_attr = self.edge_emb(data.edge_attr)
 
         simp_edge_batch = None
         if self.mega:
             simp_edge_batch = data.simp_edge_batch
-        # print("x", x.shape, "edge_attr", edge_attr.shape)
-
-        # print("data.x", data.x.shape, "data.edge_attr", data.edge_attr.shape)
-
+        
+        # Positional Encoding
         if self.config.use_pe:
             data.x = x
             data.edge_attr = edge_attr
@@ -131,10 +146,7 @@ class Interleaved_Edges(torch.nn.Module):
             x = data.x
             edge_attr = data.edge_attr
 
-        # print("data.x", data.x.shape, "data.edge_attr", data.edge_attr.shape)
-
-        # print("x", x.shape, "edge_attr", edge_attr.shape)
-
+        
         # First GNN Layer
         if self.mega:
             x, edge_attr = self.gnn1(
@@ -156,7 +168,6 @@ class Interleaved_Edges(torch.nn.Module):
         else:
             x, edge_attr = self.gnn2(x, data.edge_index, edge_attr)
 
-        # print("x", x.shape, "edge_attr", edge_attr.shape)
         # Prediction Head
         x = x[data.edge_index.T].reshape(-1, 2 * self.n_hidden).relu()
         x = torch.cat((x, edge_attr.view(-1, edge_attr.shape[1])), 1)

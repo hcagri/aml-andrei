@@ -1,11 +1,12 @@
-##################################################################################
-#
-#
-# This file contains an adaptation of the PEARLPositionalEncoder from https://github.com/ehejin/Pearl-PE/blob/main/PEARL/
-# described in <https://arxiv.org/abs/2502.01122>
-#
-#
-##################################################################################
+"""
+This file contains an adaptation of the PEARLPositionalEncoder described in <https://arxiv.org/abs/2502.01122>.
+
+The following repositories serve as references for the implementation:
+https://github.com/ehejin/Pearl-PE/blob/main/PEARL/
+https://github.com/Graph-COM/SPE/blob/master/src/stable_expressive_pe.py
+https://github.com/ivam-he/BernNet
+"""
+
 
 import math
 import torch
@@ -21,9 +22,6 @@ import torch
 from src.models.pos_enc.mlp import MLP, create_mlp
 from src.models.pos_enc.gin import GetSampleAggregator
 
-
-# This code is adapted from:
-# https://github.com/Graph-COM/SPE/blob/master/src/stable_expressive_pe.py
 
 
 class SwiGLU(nn.Module):
@@ -58,10 +56,7 @@ def filter(S, W, k):
 
 
 def bern_filter(S, W, k):
-    """
-    Optional filter from BernNet: https://github.com/ivam-he/BernNet
-    """
-
+    
     out = W
     w_list = []
     w_list.append(out.unsqueeze(-1))
@@ -145,7 +140,6 @@ class PEARLPositionalEncoder(nn.Module):
         device = edge_index.device
         # for loop N times for each Nx1 e
         if isinstance(W[0], int):
-            print("FSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSs")
             # split into N*B*[Nx1]
             j = 0
             for lap, w in zip(Lap, W):
@@ -180,10 +174,6 @@ class PEARLPositionalEncoder(nn.Module):
     @property
     def out_dims(self) -> int:
         return self.sample_aggr.out_dims
-
-
-####################################### ADDITIONS ####################################
-
 
 
 
