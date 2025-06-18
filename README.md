@@ -11,6 +11,19 @@ This repository contains the code for the paper "Graph Learning on Tabular Data:
   - [Data](#data)
   - [Parameters](#Parameters)
 
+# Think Global And Local: Graph Learning on Tabular Data - Interleaved and Full Fusion Architectures
+This repository contains the code for the paper "Graph Learning on Tabular Data: Think Global And Local - Full Fusion and Interleaved architectures on IBM’s Anti-Money Laundering Data".
+
+
+# Table of Contents
+- [Think Global And Local: Graph Learning on Tabular Data - Interleaved and Full Fusion Architectures](#think-global-and-local-graph-learning-on-tabular-data---interleaved-and-full-fusion-architectures)
+  - [Table of Contents](#table-of-contents)
+  - [Setting up](#setting-up)
+    - [Set up Locally](#set-up-locally)
+    - [Set up for DAIC](#set-up-for-daic)
+  - [Data](#data)
+  - [Parameters](#Parameters)
+
 # Setting up
 
 ## Set up Locally
