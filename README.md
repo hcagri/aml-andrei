@@ -8,7 +8,7 @@ This repository contains the code for the paper "Graph Learning on Tabular Data:
   - [Table of Contents](#table-of-contents)
   - [Setting up](#setting-up)
     - [Set up Locally](#set-up-locally)
-    - [Set up for DAIC](#set-up-for-daic)
+    - [Set up for DAIC](#set-up-for-daic-apptainer-based-slurm-environment)
   - [Data](#data)
   - [Parameters](#Parameters)
 
@@ -68,4 +68,4 @@ The data needed for the experiments can be found on [Kaggle - IBM's AML dataset]
 
 
 # Parameters
-The parameters used in the experiments whose results are shown in the paper can be found in the `params` folder. The parameters are stored in YAML format and grouped by dataset. Within each dataset folder, parameter can be identified by name, which contains architecture and sophistications. For example `F_Interleaved_MEGA.yaml` contains the parameters used for testing the Interleaved architecture with the MEGA-PNA GNN.
+The parameters used in the experiments whose results are shown in the paper can be found in the `params` folder. The parameters are stored in YAML format and grouped by dataset. Within each dataset folder, the parameter files can be identified by name, which contains the architecture name and improvements, if any. For example `F_Interleaved_MEGA.yaml` contains the parameters used for testing the Interleaved architecture with the MEGA-PNA GNN.
